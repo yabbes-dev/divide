@@ -1,0 +1,23 @@
+<svg viewBox="0 0 220 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="g" x1="8" y1="6" x2="34" y2="36" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#8B7CFF"/>
+      <stop offset="1" stop-color="#5B4FE8"/>
+    </linearGradient>
+    <linearGradient id="s" x1="12" y1="8" x2="28" y2="24" gradientUnits="userSpaceOnUse">
+      <stop stop-color="white" stop-opacity="0.35"/>
+      <stop offset="1" stop-color="white" stop-opacity="0"/>
+    </linearGradient>
+  </defs>
+  <rect width="40" height="40" rx="11" fill="url(#g)"/>
+  <rect x="10" y="8" width="18" height="24" rx="4" fill="white" fill-opacity="0.14"/>
+  <path d="M19 11.5v17" stroke="white" stroke-opacity="0.55" stroke-width="1.5" stroke-linecap="round" stroke-dasharray="2.5 3"/>
+  <rect x="12.5" y="13" width="5" height="1.75" rx="0.875" fill="white" fill-opacity="0.9"/>
+  <rect x="12.5" y="17.25" width="4" height="1.75" rx="0.875" fill="white" fill-opacity="0.65"/>
+  <rect x="20.5" y="13" width="5" height="1.75" rx="0.875" fill="white" fill-opacity="0.9"/>
+  <rect x="21.5" y="17.25" width="4" height="1.75" rx="0.875" fill="white" fill-opacity="0.65"/>
+  <rect x="12" y="22.5" width="16" height="1.75" rx="0.875" fill="white" fill-opacity="0.45"/>
+  <path d="M26 20.5l3.25 3.25M26 23.75l3.25-3.25" stroke="white" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"/>
+  <rect width="40" height="40" rx="11" fill="url(#s)"/>
+  <text x="52" y="27" fill="#F4F5FA" font-family="system-ui, -apple-system, sans-serif" font-size="22" font-weight="600" letter-spacing="-0.02em">Divide</text>
+</svg>
