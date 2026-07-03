@@ -6,12 +6,16 @@ export interface WizardItem {
   originalPrice?: number | null;
   discount?: number | null;
   assignedTo: string[];
+  /** Auto-generated line to reconcile total vs item sum (e.g. missed discounts). */
+  isAdjustment?: boolean;
 }
 
 export interface WizardReceipt {
   store?: string;
   items: WizardItem[];
   people: string[];
+  /** Subtotal or total read from the receipt image, for validation in review step. */
+  receiptReferenceTotal?: number | null;
 }
 
 export const MOCK_RECEIPT_ITEMS: Omit<WizardItem, "id" | "assignedTo">[] = [

@@ -6,6 +6,7 @@ import { ReceiptPaper } from "@/components/receipt/ReceiptPaper";
 import { BlurFade } from "@/components/magicui/blur-fade";
 import { WizardAction, WizardActions } from "@/components/wizard/WizardAction";
 import { WizardCancelButton } from "@/components/wizard/WizardCancelButton";
+import { isAdjustmentItem } from "@/lib/calculations/receipt-total";
 import { formatCurrency } from "@/lib/utils/format";
 import { cn } from "@/lib/utils";
 import type { WizardItem } from "@/types/wizard";
@@ -13,7 +14,9 @@ import type { WizardItem } from "@/types/wizard";
 interface StepPreviewProps {
   store?: string;
   items: WizardItem[];
+  receiptReferenceTotal?: number | null;
   onUpdateItem: (id: string, updates: Partial<Pick<WizardItem, "name" | "price">>) => void;
+  onUpdateReceiptTotal: (total: number) => void;
   onUpdateStore: (store: string) => void;
   onContinue: () => void;
   onCancel: () => void;
@@ -36,12 +39,18 @@ const storeTitleClass = cn(
 export function StepPreview({
   store,
   items,
+  receiptReferenceTotal,
   onUpdateItem,
+  onUpdateReceiptTotal,
   onUpdateStore,
   onContinue,
   onCancel,
 }: StepPreviewProps) {
   const total = items.reduce((sum, item) => sum + item.price, 0);
+  const totalMismatch =
+    receiptReferenceTotal != null &&
+    receiptReferenceTotal > 0 &&
+    Math.abs(total - receiptReferenceTotal) > 0.15;
   const today = new Intl.DateTimeFormat("en-GB", {
     day: "numeric",
     month: "short",
@@ -50,6 +59,15 @@ export function StepPreview({
 
   return (
     <div className="space-y-4">
+      {totalMismatch && (
+        <BlurFade>
+          <p className="rounded-md border border-primary/20 bg-accent/40 px-3 py-2 text-sm text-foreground">
+            Item total ({formatCurrency(total)}) doesn&apos;t match the receipt (
+            {formatCurrency(receiptReferenceTotal!)}). Edit prices or set the
+            total below to match.
+          </p>
+        </BlurFade>
+      )}
       <BlurFade>
         <ReceiptPaper>
           <div className="border-b border-dashed border-zinc-300 pb-4 text-center">
@@ -71,7 +89,10 @@ export function StepPreview({
 
             <ul className="divide-y divide-dashed divide-zinc-300">
               {items.map((item) => (
-                <li key={item.id} className="py-3">
+                <li
+                  key={item.id}
+                  className={cn("py-3", isAdjustmentItem(item) && "bg-zinc-50/80")}
+                >
                   <div className="flex items-center justify-between gap-3">
                     <Input
                       aria-label={`Item name for ${item.name}`}
@@ -84,7 +105,6 @@ export function StepPreview({
                     <Input
                       aria-label={`Price for ${item.name}`}
                       type="number"
-                      min={0}
                       step={0.01}
                       inputMode="decimal"
                       value={item.price}
@@ -110,19 +130,36 @@ export function StepPreview({
                       )}
                     </p>
                   )}
+                  {isAdjustmentItem(item) && (
+                    <p className="mt-1 text-xs text-zinc-500">
+                      Adjusts item total to match your receipt
+                    </p>
+                  )}
                 </li>
               ))}
             </ul>
 
             <Separator className="my-3 border-dashed border-zinc-300" />
 
-            <div className="flex items-center justify-between py-2">
+            <div className="flex items-center justify-between gap-3 py-2">
               <span className="text-sm font-semibold tracking-wide text-zinc-900 uppercase">
                 Total
               </span>
-              <span className="text-lg font-semibold text-zinc-900 tabular-nums">
-                {formatCurrency(total)}
-              </span>
+              <Input
+                aria-label="Receipt total"
+                type="number"
+                min={0}
+                step={0.01}
+                inputMode="decimal"
+                value={Number.isFinite(total) ? total : 0}
+                onChange={(e) =>
+                  onUpdateReceiptTotal(parseFloat(e.target.value) || 0)
+                }
+                className={cn(
+                  receiptFieldClass,
+                  "w-28 shrink-0 text-right text-lg font-semibold tabular-nums sm:w-24",
+                )}
+              />
             </div>
           </div>
         </ReceiptPaper>

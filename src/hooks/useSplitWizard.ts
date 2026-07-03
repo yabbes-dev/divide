@@ -2,11 +2,18 @@
 
 import { useCallback, useMemo, useRef, useState } from "react";
 import { parseReceiptImage } from "@/lib/api/parse-receipt";
+import type { ParseErrorCode } from "@/lib/api/parse-errors";
+import {
+  applyReceiptTotal,
+  stripAdjustmentItems,
+  sumItemPrices,
+} from "@/lib/calculations/receipt-total";
 import {
   calculatePersonTotals,
   formatSummaryText,
 } from "@/lib/calculations/wizard-splits";
 import { formatCurrency, toTitleCase } from "@/lib/utils/format";
+import { formatModelDisplayName } from "@/lib/utils/format-model";
 import type { WizardItem, WizardReceipt, WizardStep } from "@/types/wizard";
 
 const INITIAL_RECEIPT: WizardReceipt = {
@@ -22,6 +29,11 @@ export function useSplitWizard() {
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const [parseError, setParseError] = useState<string | null>(null);
+  const [parseErrorCode, setParseErrorCode] = useState<ParseErrorCode | null>(
+    null,
+  );
+  const [retryAfterMs, setRetryAfterMs] = useState<number | null>(null);
+  const [processingModel, setProcessingModel] = useState<string | null>(null);
   const parseGenerationRef = useRef(0);
 
   const personTotals = useMemo(
@@ -36,6 +48,9 @@ export function useSplitWizard() {
   const setImageFile = useCallback((file: File) => {
     setSelectedFile(file);
     setParseError(null);
+    setParseErrorCode(null);
+    setRetryAfterMs(null);
+    setProcessingModel(null);
     setImagePreview((prev) => {
       if (prev) URL.revokeObjectURL(prev);
       return URL.createObjectURL(file);
@@ -62,15 +77,36 @@ export function useSplitWizard() {
 
   const updateItem = useCallback(
     (id: string, updates: Partial<Pick<WizardItem, "name" | "price">>) => {
-      setReceipt((prev) => ({
-        ...prev,
-        items: prev.items.map((item) =>
+      setReceipt((prev) => {
+        const target = prev.items.find((item) => item.id === id);
+        let items = prev.items.map((item) =>
           item.id === id ? { ...item, ...updates } : item,
-        ),
-      }));
+        );
+
+        if (target && !target.isAdjustment) {
+          items = stripAdjustmentItems(items);
+        }
+
+        return {
+          ...prev,
+          items,
+          receiptReferenceTotal: sumItemPrices(items),
+        };
+      });
     },
     [],
   );
+
+  const updateReceiptTotal = useCallback((total: number) => {
+    setReceipt((prev) => {
+      const items = applyReceiptTotal(prev.items, total);
+      return {
+        ...prev,
+        items,
+        receiptReferenceTotal: total,
+      };
+    });
+  }, []);
 
   const updateStore = useCallback((store: string) => {
     setReceipt((prev) => ({ ...prev, store }));
@@ -125,23 +161,38 @@ export function useSplitWizard() {
     setStep(1);
     setIsProcessing(true);
     setParseError(null);
+    setParseErrorCode(null);
+    setRetryAfterMs(null);
+    setProcessingModel(null);
 
     const result = await parseReceiptImage(selectedFile);
 
     if (generation !== parseGenerationRef.current) return;
 
-    setIsProcessing(false);
-
     if (!result.success || !result.data) {
+      setIsProcessing(false);
       setParseError(result.error ?? "Failed to parse receipt");
+      setParseErrorCode(result.errorCode ?? null);
+      setRetryAfterMs(result.retryAfterMs ?? null);
       setStep(0);
       return;
     }
+
+    if (result.data.model) {
+      setProcessingModel(formatModelDisplayName(result.data.model));
+      await new Promise((resolve) => setTimeout(resolve, 800));
+    }
+
+    if (generation !== parseGenerationRef.current) return;
+
+    setIsProcessing(false);
+    setProcessingModel(null);
 
     setReceipt((prev) => ({
       ...prev,
       store: result.data!.store,
       items: result.data!.items,
+      receiptReferenceTotal: result.data!.receiptReferenceTotal ?? null,
     }));
     setStep(2);
   }, [selectedFile]);
@@ -157,6 +208,9 @@ export function useSplitWizard() {
     });
     setIsProcessing(false);
     setParseError(null);
+    setParseErrorCode(null);
+    setRetryAfterMs(null);
+    setProcessingModel(null);
   }, []);
 
   const cancel = useCallback(() => {
@@ -177,6 +231,9 @@ export function useSplitWizard() {
     imagePreview,
     isProcessing,
     parseError,
+    parseErrorCode,
+    retryAfterMs,
+    processingModel,
     personTotals,
     allItemsAssigned,
     setImageFile,
@@ -187,6 +244,7 @@ export function useSplitWizard() {
     startWizard,
     parseReceipt,
     updateItem,
+    updateReceiptTotal,
     updateStore,
     addPerson,
     removePerson,

@@ -12,6 +12,7 @@ import { StepSummary } from "@/components/wizard/StepSummary";
 import { StepUpload } from "@/components/wizard/StepUpload";
 import { WizardStepTransition } from "@/components/wizard/WizardStepTransition";
 import { useSplitWizard } from "@/hooks/useSplitWizard";
+import { isRateLimitUiError } from "@/lib/api/parse-errors";
 import type { WizardStep } from "@/types/wizard";
 
 const STEP_META: Record<WizardStep, { title: string; description: string }> = {
@@ -47,10 +48,10 @@ export function SplitWizard() {
   const meta = STEP_META[step];
 
   useEffect(() => {
-    if (wizard.parseError) {
+    if (wizard.parseError && !isRateLimitUiError(wizard.parseErrorCode)) {
       toast.error(wizard.parseError);
     }
-  }, [wizard.parseError]);
+  }, [wizard.parseError, wizard.parseErrorCode]);
 
   async function handleCopySummary() {
     await wizard.copySummary();
@@ -73,19 +74,29 @@ export function SplitWizard() {
             imagePreview={wizard.imagePreview}
             isLoading={wizard.isProcessing}
             error={wizard.parseError}
+            errorCode={wizard.parseErrorCode}
+            retryAfterMs={wizard.retryAfterMs}
             onSelectFile={wizard.setImageFile}
             onContinue={wizard.parseReceipt}
             onCancel={wizard.cancel}
           />
         )}
 
-        {step === 1 && <StepProcessing onCancel={wizard.cancel} />}
+        {step === 1 && (
+          <StepProcessing
+            model={wizard.processingModel}
+            isWaiting={wizard.isProcessing && !wizard.processingModel}
+            onCancel={wizard.cancel}
+          />
+        )}
 
         {step === 2 && (
         <StepPreview
           store={wizard.receipt.store}
           items={wizard.receipt.items}
+          receiptReferenceTotal={wizard.receipt.receiptReferenceTotal}
           onUpdateItem={wizard.updateItem}
+          onUpdateReceiptTotal={wizard.updateReceiptTotal}
           onUpdateStore={wizard.updateStore}
           onContinue={wizard.nextStep}
           onCancel={wizard.cancel}

@@ -4,9 +4,14 @@
  */
 
 import {
+  getReceiptReferenceTotal,
+  hasTotalMismatch,
   mapApiItemsToWizard,
   parseReceiptJson,
 } from "@/lib/api/parse-receipt-mapper";
+import {
+  type ParseErrorCode,
+} from "@/lib/api/parse-errors";
 import { compressImageForUpload } from "@/lib/utils/compress-image";
 import { toBase64 } from "@/lib/utils/toBase64";
 import type { WizardItem } from "@/types/wizard";
@@ -14,12 +19,17 @@ import type { WizardItem } from "@/types/wizard";
 export interface ParseReceiptResult {
   store: string;
   items: WizardItem[];
+  receiptReferenceTotal?: number | null;
+  totalMismatch?: boolean;
+  model?: string;
 }
 
 export interface ParseReceiptResponse {
   success: boolean;
   data?: ParseReceiptResult;
   error?: string;
+  errorCode?: ParseErrorCode;
+  retryAfterMs?: number | null;
 }
 
 /** Send a receipt image to the parse-receipt API route. */
@@ -39,7 +49,13 @@ export async function parseReceiptImage(
       }),
     });
 
-    let data: { raw?: string; error?: string };
+    let data: {
+      raw?: string;
+      model?: string;
+      error?: string;
+      code?: ParseErrorCode;
+      retryAfterMs?: number;
+    };
     try {
       data = await res.json();
     } catch {
@@ -56,6 +72,8 @@ export async function parseReceiptImage(
       return {
         success: false,
         error: data.error ?? `Failed to parse receipt (${res.status})`,
+        errorCode: data.code,
+        retryAfterMs: data.retryAfterMs ?? null,
       };
     }
 
@@ -73,6 +91,9 @@ export async function parseReceiptImage(
       data: {
         store: parsed.store ?? "Receipt",
         items: mapApiItemsToWizard(parsed.items),
+        receiptReferenceTotal: getReceiptReferenceTotal(parsed),
+        totalMismatch: hasTotalMismatch(parsed),
+        model: data.model,
       },
     };
   } catch (error) {

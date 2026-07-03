@@ -1,6 +1,6 @@
 const MAX_UPLOAD_BYTES = 4 * 1024 * 1024; // 4MB raw file limit before compression
-const TARGET_MAX_BYTES = 1.5 * 1024 * 1024; // aim under this after compression
-const MAX_DIMENSION = 1600;
+const TARGET_MAX_BYTES = 2 * 1024 * 1024; // aim under this after compression
+const MAX_DIMENSION = 2400; // higher resolution helps OCR read small prices
 
 /** Resize and compress an image in the browser before upload. */
 export async function compressImageForUpload(file: File): Promise<File> {
@@ -30,10 +30,10 @@ export async function compressImageForUpload(file: File): Promise<File> {
   ctx.drawImage(bitmap, 0, 0, width, height);
   bitmap.close();
 
-  let quality = 0.85;
+  let quality = 0.92;
   let blob = await canvasToJpegBlob(canvas, quality);
 
-  while (blob.size > TARGET_MAX_BYTES && quality > 0.5) {
+  while (blob.size > TARGET_MAX_BYTES && quality > 0.65) {
     quality -= 0.1;
     blob = await canvasToJpegBlob(canvas, quality);
   }
