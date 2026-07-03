@@ -1,12 +1,19 @@
 "use client";
 
+import type { ReactNode } from "react";
+import { AlertCircle, CheckCircle2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 import { ReceiptPaper } from "@/components/receipt/ReceiptPaper";
 import { BlurFade } from "@/components/magicui/blur-fade";
 import { WizardAction, WizardActions } from "@/components/wizard/WizardAction";
 import { WizardCancelButton } from "@/components/wizard/WizardCancelButton";
-import { isAdjustmentItem } from "@/lib/calculations/receipt-total";
+import {
+  amountsMatchMoney,
+  hasItemsTotalMismatch,
+  isAdjustmentItem,
+  sumItemPrices,
+} from "@/lib/calculations/receipt-total";
 import { formatCurrency } from "@/lib/utils/format";
 import { cn } from "@/lib/utils";
 import type { WizardItem } from "@/types/wizard";
@@ -15,6 +22,7 @@ interface StepPreviewProps {
   store?: string;
   items: WizardItem[];
   receiptReferenceTotal?: number | null;
+  receiptTargetTotal?: number | null;
   onUpdateItem: (id: string, updates: Partial<Pick<WizardItem, "name" | "price">>) => void;
   onUpdateReceiptTotal: (total: number) => void;
   onUpdateStore: (store: string) => void;
@@ -36,21 +44,55 @@ const storeTitleClass = cn(
   "h-auto py-1 text-center text-lg font-bold tracking-[0.15em] uppercase sm:text-xl",
 );
 
+function ReviewNotice({
+  variant,
+  children,
+}: {
+  variant: "warning" | "success";
+  children: ReactNode;
+}) {
+  const Icon = variant === "warning" ? AlertCircle : CheckCircle2;
+  return (
+    <p
+      className={cn(
+        "flex items-start gap-2 rounded-md border px-3 py-2 text-sm",
+        variant === "warning"
+          ? "border-primary/20 bg-accent/40 text-foreground"
+          : "border-border bg-muted/40 text-muted-foreground",
+      )}
+    >
+      <Icon
+        className={cn(
+          "mt-0.5 size-4 shrink-0",
+          variant === "warning" ? "text-primary" : "text-chart-3",
+        )}
+        aria-hidden
+      />
+      <span>{children}</span>
+    </p>
+  );
+}
+
 export function StepPreview({
   store,
   items,
   receiptReferenceTotal,
+  receiptTargetTotal,
   onUpdateItem,
   onUpdateReceiptTotal,
   onUpdateStore,
   onContinue,
   onCancel,
 }: StepPreviewProps) {
-  const total = items.reduce((sum, item) => sum + item.price, 0);
-  const totalMismatch =
+  const itemsSum = sumItemPrices(items);
+  const targetTotal = receiptTargetTotal ?? itemsSum;
+  const itemsMismatch = hasItemsTotalMismatch(items, targetTotal);
+  const receiptPhotoMismatch =
     receiptReferenceTotal != null &&
     receiptReferenceTotal > 0 &&
-    Math.abs(total - receiptReferenceTotal) > 0.15;
+    !amountsMatchMoney(targetTotal, receiptReferenceTotal);
+  const totalsAligned = !itemsMismatch && !receiptPhotoMismatch;
+
   const today = new Intl.DateTimeFormat("en-GB", {
     day: "numeric",
     month: "short",
@@ -59,13 +101,29 @@ export function StepPreview({
 
   return (
     <div className="space-y-4">
-      {totalMismatch && (
+      {itemsMismatch && (
         <BlurFade>
-          <p className="rounded-md border border-primary/20 bg-accent/40 px-3 py-2 text-sm text-foreground">
-            Item total ({formatCurrency(total)}) doesn&apos;t match the receipt (
-            {formatCurrency(receiptReferenceTotal!)}). Edit prices or set the
-            total below to match.
-          </p>
+          <ReviewNotice variant="warning">
+            Items add up to {formatCurrency(itemsSum)} but the total is{" "}
+            {formatCurrency(targetTotal)}. Fix individual prices or update the
+            total below — we&apos;ll add a discount/adjustment line if needed.
+          </ReviewNotice>
+        </BlurFade>
+      )}
+      {!itemsMismatch && receiptPhotoMismatch && (
+        <BlurFade>
+          <ReviewNotice variant="warning">
+            Total ({formatCurrency(targetTotal)}) doesn&apos;t match the receipt
+            photo ({formatCurrency(receiptReferenceTotal!)}). Set the total
+            below to match your receipt.
+          </ReviewNotice>
+        </BlurFade>
+      )}
+      {totalsAligned && items.length > 0 && (
+        <BlurFade>
+          <ReviewNotice variant="success">
+            Items add up to {formatCurrency(itemsSum)} — total looks good.
+          </ReviewNotice>
         </BlurFade>
       )}
       <BlurFade>
@@ -141,25 +199,36 @@ export function StepPreview({
 
             <Separator className="my-3 border-dashed border-zinc-300" />
 
-            <div className="flex items-center justify-between gap-3 py-2">
-              <span className="text-sm font-semibold tracking-wide text-zinc-900 uppercase">
-                Total
-              </span>
-              <Input
-                aria-label="Receipt total"
-                type="number"
-                min={0}
-                step={0.01}
-                inputMode="decimal"
-                value={Number.isFinite(total) ? total : 0}
-                onChange={(e) =>
-                  onUpdateReceiptTotal(parseFloat(e.target.value) || 0)
-                }
+            <div className="space-y-1 py-2">
+              <div className="flex items-center justify-between gap-3">
+                <span className="text-sm font-semibold tracking-wide text-zinc-900 uppercase">
+                  Total
+                </span>
+                <Input
+                  aria-label="Receipt total"
+                  type="number"
+                  min={0}
+                  step={0.01}
+                  inputMode="decimal"
+                  value={Number.isFinite(targetTotal) ? targetTotal : 0}
+                  onChange={(e) =>
+                    onUpdateReceiptTotal(parseFloat(e.target.value) || 0)
+                  }
+                  className={cn(
+                    receiptFieldClass,
+                    "w-28 shrink-0 text-right text-lg font-semibold tabular-nums sm:w-24",
+                    itemsMismatch && "text-primary",
+                  )}
+                />
+              </div>
+              <p
                 className={cn(
-                  receiptFieldClass,
-                  "w-28 shrink-0 text-right text-lg font-semibold tabular-nums sm:w-24",
+                  "text-right text-xs tabular-nums",
+                  itemsMismatch ? "text-primary" : "text-zinc-500",
                 )}
-              />
+              >
+                Items sum: {formatCurrency(itemsSum)}
+              </p>
             </div>
           </div>
         </ReceiptPaper>

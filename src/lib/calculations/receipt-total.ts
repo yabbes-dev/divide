@@ -2,8 +2,21 @@ import type { WizardItem } from "@/types/wizard";
 
 export const ADJUSTMENT_ITEM_NAME = "Discount / adjustment";
 
+export const MONEY_TOLERANCE = 0.015;
+
 function roundMoney(value: number): number {
   return Math.round(value * 100) / 100;
+}
+
+export function amountsMatchMoney(a: number, b: number): boolean {
+  return Math.abs(roundMoney(a) - roundMoney(b)) <= MONEY_TOLERANCE;
+}
+
+export function hasItemsTotalMismatch(
+  items: WizardItem[],
+  targetTotal: number,
+): boolean {
+  return !amountsMatchMoney(sumItemPrices(items), targetTotal);
 }
 
 export function isAdjustmentItem(item: WizardItem): boolean {

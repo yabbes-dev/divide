@@ -95,6 +95,7 @@ export function SplitWizard() {
           store={wizard.receipt.store}
           items={wizard.receipt.items}
           receiptReferenceTotal={wizard.receipt.receiptReferenceTotal}
+          receiptTargetTotal={wizard.receipt.receiptTargetTotal}
           onUpdateItem={wizard.updateItem}
           onUpdateReceiptTotal={wizard.updateReceiptTotal}
           onUpdateStore={wizard.updateStore}

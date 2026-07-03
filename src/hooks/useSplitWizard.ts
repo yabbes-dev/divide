@@ -87,11 +87,13 @@ export function useSplitWizard() {
           items = stripAdjustmentItems(items);
         }
 
-        return {
-          ...prev,
-          items,
-          receiptReferenceTotal: sumItemPrices(items),
-        };
+        const next: WizardReceipt = { ...prev, items };
+
+        if (target?.isAdjustment && updates.price !== undefined) {
+          next.receiptTargetTotal = sumItemPrices(items);
+        }
+
+        return next;
       });
     },
     [],
@@ -103,7 +105,7 @@ export function useSplitWizard() {
       return {
         ...prev,
         items,
-        receiptReferenceTotal: total,
+        receiptTargetTotal: total,
       };
     });
   }, []);
@@ -193,6 +195,7 @@ export function useSplitWizard() {
       store: result.data!.store,
       items: result.data!.items,
       receiptReferenceTotal: result.data!.receiptReferenceTotal ?? null,
+      receiptTargetTotal: sumItemPrices(result.data!.items),
     }));
     setStep(2);
   }, [selectedFile]);

@@ -14,8 +14,10 @@ export interface WizardReceipt {
   store?: string;
   items: WizardItem[];
   people: string[];
-  /** Subtotal or total read from the receipt image, for validation in review step. */
+  /** Subtotal or total read from the receipt image (from AI — not changed by edits). */
   receiptReferenceTotal?: number | null;
+  /** User-editable receipt total on the review step. */
+  receiptTargetTotal?: number | null;
 }
 
 export const MOCK_RECEIPT_ITEMS: Omit<WizardItem, "id" | "assignedTo">[] = [
