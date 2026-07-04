@@ -110,7 +110,8 @@ export function DivideLogo({ variant = "full", className, size = 32 }: DivideLog
   const rightClipId = `divide-right${uid}`;
   const markSize = variant === "wordmark" ? 0 : size;
   const wordmarkClass = cn(
-    "font-semibold tracking-tight text-foreground",
+    "font-display font-bold tracking-[0.06em]",
+    "bg-gradient-to-br from-[#7B93FF] via-primary to-[#4A6AE8] bg-clip-text text-transparent",
     size >= 36 ? "text-2xl" : size >= 28 ? "text-xl" : "text-lg",
   );
 
@@ -127,7 +128,7 @@ export function DivideLogo({ variant = "full", className, size = 32 }: DivideLog
   }
 
   if (variant === "wordmark") {
-    return <span className={cn(wordmarkClass, className)}>Divide</span>;
+    return <span className={cn(wordmarkClass, className)}>divide</span>;
   }
 
   return (
@@ -139,7 +140,7 @@ export function DivideLogo({ variant = "full", className, size = 32 }: DivideLog
         className="shrink-0 rounded-full"
         style={{ width: markSize, height: markSize }}
       />
-      <span className={wordmarkClass}>Divide</span>
+      <span className={wordmarkClass}>divide</span>
     </span>
   );
 }

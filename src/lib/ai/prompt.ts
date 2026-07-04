@@ -1,4 +1,4 @@
-import { SchemaType, type ResponseSchema } from "@google/generative-ai";
+import { toGeminiResponseSchema } from "@/lib/ai/receipt-schema";
 
 /**
  * Prompt templates for receipt parsing.
@@ -39,29 +39,17 @@ OTHER:
 - Return ONLY the JSON object — no markdown, no explanation.`;
 }
 
-export function buildReceiptParseSchema(): ResponseSchema {
-  return {
-    type: SchemaType.OBJECT,
-    properties: {
-      store: { type: SchemaType.STRING },
-      items: {
-        type: SchemaType.ARRAY,
-        items: {
-          type: SchemaType.OBJECT,
-          properties: {
-            name: { type: SchemaType.STRING },
-            quantity: { type: SchemaType.NUMBER },
-            unitPrice: { type: SchemaType.NUMBER },
-            price: { type: SchemaType.NUMBER },
-            discount: { type: SchemaType.NUMBER },
-            originalPrice: { type: SchemaType.NUMBER },
-          },
-          required: ["name", "quantity", "price"],
-        },
-      },
-      subtotal: { type: SchemaType.NUMBER },
-      total: { type: SchemaType.NUMBER },
-    },
-    required: ["store", "items"],
-  };
+/** Groq vision models reject system messages when images are present — use as user text. */
+export function buildGroqReceiptParsePrompt(): string {
+  return `${buildReceiptParsePrompt()}
+
+Return a single JSON object matching this shape:
+{
+  "store": string,
+  "items": [{ "name": string, "quantity": number, "price": number, "unitPrice"?: number, "discount"?: number, "originalPrice"?: number }],
+  "subtotal"?: number,
+  "total"?: number
+}`;
 }
+
+export { toGeminiResponseSchema as buildReceiptParseSchema };

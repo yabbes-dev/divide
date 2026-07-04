@@ -40,7 +40,7 @@ const STEP_META: Record<WizardStep, { title: string; description: string }> = {
     description: "Tap a name for each item. Tap multiple to split evenly.",
   },
   5: {
-    title: "All sorted",
+    title: "All sorted!",
     description: "Here's what everyone owes.",
   },
 };

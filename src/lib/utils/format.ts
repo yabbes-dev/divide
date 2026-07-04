@@ -2,15 +2,21 @@
  * Formatting utilities for currency and dates.
  */
 
+import {
+  DEFAULT_CURRENCY,
+  formatMoneyAmount,
+  type CurrencyCode,
+} from "@/lib/currency/constants";
+
 /** Shared class for currency amounts */
 export const moneyClass = "text-money";
 
-/** Format a number as currency (EUR for MVP). */
-export function formatCurrency(amount: number, currency = "EUR"): string {
-  return new Intl.NumberFormat("en-IE", {
-    style: "currency",
-    currency,
-  }).format(amount);
+/** Format a number as currency (defaults to EUR). Prefer `useCurrency().formatMoney` in the wizard. */
+export function formatCurrency(
+  amount: number,
+  currency: CurrencyCode = DEFAULT_CURRENCY,
+): string {
+  return formatMoneyAmount(amount, currency);
 }
 
 /** Format an ISO date string for display. */

@@ -3,8 +3,8 @@
 import { useEffect, useRef } from "react";
 import { useInView, useMotionValue, useReducedMotion, useSpring } from "motion/react";
 
+import { useCurrency } from "@/lib/currency/CurrencyProvider";
 import { cn } from "@/lib/utils";
-import { formatCurrency } from "@/lib/utils/format";
 
 interface NumberTickerProps {
   value: number;
@@ -12,6 +12,7 @@ interface NumberTickerProps {
 }
 
 export function NumberTicker({ value, className }: NumberTickerProps) {
+  const { formatMoney } = useCurrency();
   const ref = useRef<HTMLSpanElement>(null);
   const reduceMotion = useReducedMotion();
   const motionValue = useMotionValue(0);
@@ -28,20 +29,20 @@ export function NumberTicker({ value, className }: NumberTickerProps) {
 
   useEffect(() => {
     if (reduceMotion) {
-      if (ref.current) ref.current.textContent = formatCurrency(value);
+      if (ref.current) ref.current.textContent = formatMoney(value);
       return;
     }
 
     return springValue.on("change", (latest) => {
       if (ref.current) {
-        ref.current.textContent = formatCurrency(latest);
+        ref.current.textContent = formatMoney(latest);
       }
     });
-  }, [reduceMotion, springValue, value]);
+  }, [formatMoney, reduceMotion, springValue, value]);
 
   return (
     <span ref={ref} className={cn("text-money", className)}>
-      {formatCurrency(0)}
+      {formatMoney(0)}
     </span>
   );
 }

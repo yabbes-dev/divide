@@ -12,7 +12,8 @@ import {
   calculatePersonTotals,
   formatSummaryText,
 } from "@/lib/calculations/wizard-splits";
-import { formatCurrency, toTitleCase } from "@/lib/utils/format";
+import { useCurrency } from "@/lib/currency/CurrencyProvider";
+import { toTitleCase } from "@/lib/utils/format";
 import { formatModelDisplayName } from "@/lib/utils/format-model";
 import type { WizardItem, WizardReceipt, WizardStep } from "@/types/wizard";
 
@@ -22,6 +23,7 @@ const INITIAL_RECEIPT: WizardReceipt = {
 };
 
 export function useSplitWizard() {
+  const { formatMoney } = useCurrency();
   const [started, setStarted] = useState(false);
   const [step, setStep] = useState<WizardStep>(0);
   const [receipt, setReceipt] = useState<WizardReceipt>(INITIAL_RECEIPT);
@@ -234,9 +236,9 @@ export function useSplitWizard() {
   }, [reset]);
 
   const copySummary = useCallback(async () => {
-    const text = formatSummaryText(personTotals, formatCurrency);
+    const text = formatSummaryText(personTotals, formatMoney);
     await navigator.clipboard.writeText(text);
-  }, [personTotals]);
+  }, [formatMoney, personTotals]);
 
   return {
     started,

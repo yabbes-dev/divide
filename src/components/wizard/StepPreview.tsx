@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "motion/react";
-import { Check } from "lucide-react";
+import { Check, Sparkles } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 import { ReceiptPaper } from "@/components/receipt/ReceiptPaper";
@@ -15,7 +15,7 @@ import {
   isAdjustmentItem,
   sumItemPrices,
 } from "@/lib/calculations/receipt-total";
-import { formatCurrency } from "@/lib/utils/format";
+import { useCurrency } from "@/lib/currency/CurrencyProvider";
 import { cn } from "@/lib/utils";
 import type { WizardItem } from "@/types/wizard";
 
@@ -54,6 +54,7 @@ export function StepPreview({
   onContinue,
   onCancel,
 }: StepPreviewProps) {
+  const { formatMoney } = useCurrency();
   const itemsSum = sumItemPrices(items);
   const targetTotal = receiptTargetTotal ?? itemsSum;
   const itemsMismatch = hasItemsTotalMismatch(items, targetTotal);
@@ -74,16 +75,16 @@ export function StepPreview({
       {itemsMismatch && (
         <BlurFade>
           <InlineNotice variant="warning">
-            Items add up to {formatCurrency(itemsSum)}, but your total is{" "}
-            {formatCurrency(targetTotal)}. Update prices or set the total below.
+            Items add up to {formatMoney(itemsSum)}, but your total is{" "}
+            {formatMoney(targetTotal)}. Update prices or set the total below.
           </InlineNotice>
         </BlurFade>
       )}
       {!itemsMismatch && receiptPhotoMismatch && (
         <BlurFade>
           <InlineNotice variant="warning">
-            Your total ({formatCurrency(targetTotal)}) doesn&apos;t match the
-            receipt ({formatCurrency(receiptReferenceTotal!)}). Take another look
+            Your total ({formatMoney(targetTotal)}) doesn&apos;t match the
+            receipt ({formatMoney(receiptReferenceTotal!)}). Take another look
             before continuing.
           </InlineNotice>
         </BlurFade>
@@ -105,7 +106,7 @@ export function StepPreview({
                 >
                   <Check className="size-3.5 text-success" aria-hidden />
                 </motion.span>
-                Items add up to {formatCurrency(itemsSum)} — you&apos;re good to
+                Items add up to {formatMoney(itemsSum)} — you&apos;re good to
                 go.
               </span>
             </InlineNotice>
@@ -168,11 +169,11 @@ export function StepPreview({
                   </div>
                   {item.discount != null && item.discount > 0 && (
                     <p className="mt-1 text-xs text-receipt-muted">
-                      Discount: −{formatCurrency(item.discount)}
+                      Discount: −{formatMoney(item.discount)}
                       {item.originalPrice != null && item.originalPrice > item.price && (
                         <span className="ml-2 line-through opacity-60">
                           {" "}
-                          was {formatCurrency(item.originalPrice)}
+                          was {formatMoney(item.originalPrice)}
                         </span>
                       )}
                     </p>
@@ -218,12 +219,17 @@ export function StepPreview({
                   itemsMismatch ? "text-warning" : "text-receipt-muted",
                 )}
               >
-                Items sum: {formatCurrency(itemsSum)}
+                Items sum: {formatMoney(itemsSum)}
               </p>
             </div>
           </div>
         </ReceiptPaper>
       </BlurFade>
+
+      <p className="flex items-center justify-center gap-1.5 text-center text-xs leading-relaxed text-muted-foreground">
+        <Sparkles className="size-3 shrink-0 text-primary/80" aria-hidden />
+        AI-read receipt — verify items and total before continuing.
+      </p>
 
       <WizardActions>
         <BlurFade delay={0.1}>

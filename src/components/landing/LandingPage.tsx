@@ -7,6 +7,7 @@ import { BlurFade } from "@/components/magicui/blur-fade";
 import { BorderBeam } from "@/components/magicui/border-beam";
 import { FloatingBackground } from "@/components/layout/FloatingBackground";
 import { TypewriterText } from "@/components/magicui/typewriter-text";
+import { CurrencySelect } from "@/components/landing/CurrencySelect";
 import { ThemeToggle } from "@/components/layout/ThemeToggle";
 import { WizardAction } from "@/components/wizard/WizardAction";
 
@@ -42,23 +43,26 @@ export function LandingPage({ onGetStarted }: LandingPageProps) {
 
         <BlurFade delay={0.1}>
           <h1 className="text-display">
-            <AnimatedGradientText>Split receipts fairly</AnimatedGradientText>
+            <AnimatedGradientText>Split bills in seconds!</AnimatedGradientText>
           </h1>
         </BlurFade>
 
         <BlurFade delay={0.15} className="mt-4">
           <TypewriterText
-            text="No account needed — your receipt stays on this device."
+            text="From snap to split — sorted."
             className="mx-auto max-w-xs"
           />
         </BlurFade>
 
         <BlurFade delay={0.2} className="mt-10">
-          <div className="relative overflow-hidden">
-            {!reduceMotion && <BorderBeam size={180} duration={10} />}
-            <WizardAction className="relative z-10" onClick={onGetStarted}>
-              Split a receipt
-            </WizardAction>
+          <div className="flex flex-col items-center gap-4">
+            <CurrencySelect />
+            <div className="relative overflow-hidden">
+              {!reduceMotion && <BorderBeam size={180} duration={10} />}
+              <WizardAction className="relative z-10" onClick={onGetStarted}>
+                Split a receipt
+              </WizardAction>
+            </div>
           </div>
         </BlurFade>
       </main>
