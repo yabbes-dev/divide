@@ -227,7 +227,9 @@ export function StepPreview({
 
       <WizardActions>
         <BlurFade delay={0.1}>
-          <WizardAction onClick={onContinue}>Looks good</WizardAction>
+          <WizardAction onClick={onContinue} disabled={itemsMismatch || items.length === 0}>
+            Looks good
+          </WizardAction>
         </BlurFade>
         <WizardCancelButton onClick={onCancel} />
       </WizardActions>

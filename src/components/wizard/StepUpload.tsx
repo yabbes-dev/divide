@@ -15,7 +15,6 @@ import {
   isRateLimitUiError,
 } from "@/lib/api/parse-errors";
 import { cn } from "@/lib/utils";
-import { wizardPanelClass } from "@/lib/wizard-styles";
 
 interface StepUploadProps {
   imagePreview: string | null;
@@ -125,7 +124,7 @@ export function StepUpload({
   return (
     <div className="space-y-4">
       <BlurFade>
-        <Card className={wizardPanelClass}>
+        <Card className="border-0 bg-transparent shadow-none">
           <CardContent className="space-y-4 pt-4">
             <motion.div
               role="button"
@@ -234,7 +233,7 @@ export function StepUpload({
       {error && (
         <BlurFade>
           {isRateLimitError ? (
-            <Card className={cn(wizardPanelClass, "relative overflow-hidden border-primary/40 shadow-card")}>
+            <Card className="relative overflow-hidden border border-border/60 bg-surface-elevated/80 shadow-card backdrop-blur-sm">
               <div
                 className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-primary/60 to-transparent"
                 aria-hidden

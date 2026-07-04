@@ -16,7 +16,7 @@ export function WizardCancelButton({
       type="button"
       variant="link"
       disabled={disabled}
-      className="h-auto min-h-0 px-2 py-1 text-xs font-medium text-muted-foreground hover:text-foreground"
+      className="h-auto min-h-0 px-2 py-1 text-xs font-medium text-muted-foreground underline underline-offset-4 hover:text-foreground"
       onClick={onClick}
     >
       {label}

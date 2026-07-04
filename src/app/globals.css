@@ -238,22 +238,23 @@
     box-shadow: 0 4px 14px var(--glow-primary);
   }
 
-  /** Subtle dark-tinted panel for wizard content cards (upload, assign, summary). */
+  /** Subtle elevated panel for wizard content cards (assign, etc.). */
   .wizard-panel {
-    border-color: color-mix(in oklch, var(--border) 40%, var(--foreground) 60%);
+    border-color: var(--border);
     background: linear-gradient(
       168deg,
-      color-mix(in oklch, var(--card) 94%, var(--foreground)) 0%,
-      color-mix(in oklch, var(--card) 80%, var(--foreground)) 100%
+      var(--surface-elevated) 0%,
+      var(--surface-sunken) 100%
     );
+    box-shadow: var(--shadow-card);
   }
 
   .dark .wizard-panel {
-    border-color: color-mix(in oklch, var(--border) 30%, oklch(0.48 0.02 250) 70%);
+    border-color: var(--border);
     background: linear-gradient(
       168deg,
-      color-mix(in oklch, var(--card) 100%, transparent) 0%,
-      color-mix(in oklch, var(--card) 68%, black) 100%
+      color-mix(in oklch, var(--surface-elevated) 92%, var(--primary) 8%) 0%,
+      var(--surface-sunken) 100%
     );
   }
 

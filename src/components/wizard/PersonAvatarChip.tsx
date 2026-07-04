@@ -9,42 +9,34 @@ import { cn } from "@/lib/utils";
 const AVATAR_PALETTES = [
   {
     ring: "ring-primary/40",
-    badge: "bg-primary text-primary-foreground",
     surface: "bg-gradient-to-br from-primary/30 via-primary/15 to-primary/5",
   },
   {
     ring: "ring-success/40",
-    badge: "bg-success text-white",
     surface: "bg-gradient-to-br from-success/30 via-success/15 to-success/5",
   },
   {
     ring: "ring-info/40",
-    badge: "bg-info text-white",
     surface: "bg-gradient-to-br from-info/30 via-info/15 to-info/5",
   },
   {
     ring: "ring-warning/40",
-    badge: "bg-warning text-white",
     surface: "bg-gradient-to-br from-warning/30 via-warning/15 to-warning/5",
   },
   {
     ring: "ring-chart-2/40",
-    badge: "bg-chart-2 text-white",
     surface: "bg-gradient-to-br from-chart-2/30 via-chart-2/15 to-chart-2/5",
   },
   {
     ring: "ring-chart-4/40",
-    badge: "bg-chart-4 text-white",
     surface: "bg-gradient-to-br from-chart-4/30 via-chart-4/15 to-chart-4/5",
   },
   {
     ring: "ring-chart-5/40",
-    badge: "bg-chart-5 text-white",
     surface: "bg-gradient-to-br from-chart-5/30 via-chart-5/15 to-chart-5/5",
   },
   {
     ring: "ring-chart-3/40",
-    badge: "bg-chart-3 text-white",
     surface: "bg-gradient-to-br from-chart-3/30 via-chart-3/15 to-chart-3/5",
   },
 ] as const;
@@ -127,12 +119,7 @@ export function PersonAvatar({
           </span>
         </div>
         {selected && (
-          <span
-            className={cn(
-              "absolute -bottom-0.5 -right-0.5 flex size-4 items-center justify-center rounded-full",
-              palette.badge,
-            )}
-          >
+          <span className="absolute -bottom-0.5 -right-0.5 flex size-4 items-center justify-center rounded-full bg-primary text-primary-foreground">
             <Check className="size-2.5" aria-hidden />
           </span>
         )}
