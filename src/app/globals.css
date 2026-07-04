@@ -195,8 +195,52 @@
 @layer utilities {
   .app-shell {
     background:
-      radial-gradient(ellipse 80% 50% at 50% -20%, var(--shell-glow), transparent),
-      var(--background);
+      radial-gradient(ellipse 75% 55% at 50% 50%, transparent 35%, color-mix(in oklch, var(--background), var(--foreground) 3%) 100%),
+      radial-gradient(ellipse 90% 55% at 50% -18%, var(--shell-glow), transparent 62%),
+      radial-gradient(ellipse 70% 45% at 50% 108%, var(--shell-glow), transparent 58%),
+      linear-gradient(
+        180deg,
+        color-mix(in oklch, var(--background), var(--primary) 4%) 0%,
+        var(--background) 45%,
+        color-mix(in oklch, var(--background), var(--primary) 2%) 100%
+      );
+  }
+
+  /** Fade decorative floaters out of the center content column. */
+  .floaters-safe-zone {
+    -webkit-mask-image: radial-gradient(
+      ellipse 64% 60% at 50% 50%,
+      transparent 34%,
+      rgb(0 0 0 / 0.25) 52%,
+      rgb(0 0 0 / 0.7) 72%,
+      black 88%
+    );
+    mask-image: radial-gradient(
+      ellipse 64% 60% at 50% 50%,
+      transparent 34%,
+      rgb(0 0 0 / 0.25) 52%,
+      rgb(0 0 0 / 0.7) 72%,
+      black 88%
+    );
+  }
+
+  @media (min-width: 768px) {
+    .floaters-safe-zone {
+      -webkit-mask-image: radial-gradient(
+        ellipse 54% 52% at 50% 50%,
+        transparent 36%,
+        rgb(0 0 0 / 0.35) 58%,
+        rgb(0 0 0 / 0.75) 76%,
+        black 90%
+      );
+      mask-image: radial-gradient(
+        ellipse 54% 52% at 50% 50%,
+        transparent 36%,
+        rgb(0 0 0 / 0.35) 58%,
+        rgb(0 0 0 / 0.75) 76%,
+        black 90%
+      );
+    }
   }
 
   .text-display {

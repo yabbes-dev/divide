@@ -20,22 +20,14 @@ export function LandingPage({ onGetStarted }: LandingPageProps) {
 
   return (
     <div className="app-shell relative flex min-h-dvh w-full flex-col overflow-hidden pt-[env(safe-area-inset-top)]">
-      <FloatingBackground />
+      <FloatingBackground floaters />
       <div className="absolute right-4 top-[env(safe-area-inset-top)] z-50 pt-2.5">
         <ThemeToggle />
       </div>
-      <div
-        className="pointer-events-none absolute left-1/2 top-1/3 h-64 w-64 -translate-x-1/2 bg-primary/15 blur-3xl"
-        aria-hidden
-      />
 
-      <main className="relative mx-auto flex w-full max-w-lg flex-1 flex-col items-center justify-center px-6 pb-[max(4rem,env(safe-area-inset-bottom))] text-center">
+      <main className="relative z-10 mx-auto flex w-full max-w-lg flex-1 flex-col items-center justify-center px-6 pb-[max(4rem,env(safe-area-inset-bottom))] text-center">
         <BlurFade delay={0.05}>
           <div className="relative mb-8 flex flex-col items-center gap-4">
-            <div
-              className="pointer-events-none absolute inset-0 -m-10 bg-primary/25 blur-3xl"
-              aria-hidden
-            />
             <DivideLogo variant="mark" size={80} className="relative" />
             <DivideLogo variant="wordmark" size={36} className="relative" />
           </div>

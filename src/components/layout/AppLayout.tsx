@@ -31,7 +31,7 @@ export function AppLayout({
 }: AppLayoutProps) {
   return (
     <div className="app-shell relative flex min-h-dvh w-full flex-col overflow-hidden">
-      <FloatingBackground />
+      <FloatingBackground floaters tone="subtle" />
       <header className="sticky top-0 z-40 border-b border-border/40 bg-background/60 pt-[env(safe-area-inset-top)] backdrop-blur-xl">
         <div className="relative mx-auto flex h-14 w-full max-w-lg items-center justify-center px-4">
           {onBack && (
@@ -55,7 +55,7 @@ export function AppLayout({
         </div>
       </header>
 
-      <main className="relative mx-auto flex w-full max-w-lg flex-1 min-h-0 flex-col overflow-y-auto">
+      <main className="relative z-10 mx-auto flex w-full max-w-lg flex-1 min-h-0 flex-col overflow-y-auto">
         <div
           className={cn(
             "flex w-full flex-1 flex-col justify-center gap-6 px-5 pt-5",

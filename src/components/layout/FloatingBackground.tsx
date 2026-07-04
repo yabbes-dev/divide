@@ -36,6 +36,8 @@ interface Floater {
   duration: number;
   delay: number;
   driftX: number;
+  /** Hide on narrow screens when the icon sits in the main content column. */
+  mobileHidden?: boolean;
 }
 
 /** Periphery-only positions — keeps the center column clear for wizard content. */
@@ -219,6 +221,7 @@ const FLOATERS: Floater[] = [
     duration: 18,
     delay: 4,
     driftX: 6,
+    mobileHidden: true,
   },
   {
     id: "divide",
@@ -231,6 +234,7 @@ const FLOATERS: Floater[] = [
     duration: 15,
     delay: 2.8,
     driftX: -5,
+    mobileHidden: true,
   },
   {
     id: "equals",
@@ -243,6 +247,7 @@ const FLOATERS: Floater[] = [
     duration: 17,
     delay: 1.5,
     driftX: 4,
+    mobileHidden: true,
   },
   {
     id: "plus",
@@ -255,30 +260,45 @@ const FLOATERS: Floater[] = [
     duration: 16,
     delay: 0.9,
     driftX: -3,
+    mobileHidden: true,
   },
 ];
 
 const FLOATER_CLASS =
-  "absolute text-primary/22 dark:text-primary/30";
+  "absolute text-primary/10 dark:text-primary/16 md:text-primary/20 md:dark:text-primary/28";
 
 interface FloatingBackgroundProps {
   className?: string;
+  /** Decorative periphery icons — masked away from the center content column. */
+  floaters?: boolean;
+  /** Wizard steps use a softer treatment so controls stay the focus. */
+  tone?: "default" | "subtle";
 }
 
-export function FloatingBackground({ className }: FloatingBackgroundProps) {
+export function FloatingBackground({
+  className,
+  floaters = false,
+  tone = "default",
+}: FloatingBackgroundProps) {
   const reduceMotion = useReducedMotion();
+
+  if (!floaters) return null;
 
   return (
     <div
       className={cn(
-        "pointer-events-none absolute inset-0 overflow-hidden select-none",
+        "floaters-safe-zone pointer-events-none absolute inset-0 z-0 overflow-hidden select-none",
+        tone === "subtle" && "opacity-75 md:opacity-90",
         className,
       )}
       aria-hidden
     >
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_75%_60%_at_50%_48%,transparent_42%,var(--background)_100%)]" />
-
       {FLOATERS.map((item) => {
+        const itemClass = cn(
+          FLOATER_CLASS,
+          item.mobileHidden && "max-md:hidden",
+          !reduceMotion && "animate-float-drift",
+        );
         const style = {
           left: item.left,
           top: item.top,
@@ -293,11 +313,7 @@ export function FloatingBackground({ className }: FloatingBackgroundProps) {
             <span
               key={item.id}
               style={style}
-              className={cn(
-                FLOATER_CLASS,
-                "font-semibold leading-none",
-                !reduceMotion && "animate-float-drift",
-              )}
+              className={cn(itemClass, "origin-top-left font-semibold leading-none max-md:scale-[0.82]")}
             >
               <span style={{ fontSize: item.size }}>{item.glyph}</span>
             </span>
@@ -309,10 +325,7 @@ export function FloatingBackground({ className }: FloatingBackgroundProps) {
           <span
             key={item.id}
             style={style}
-            className={cn(
-              FLOATER_CLASS,
-              !reduceMotion && "animate-float-drift",
-            )}
+            className={cn(itemClass, "origin-top-left max-md:scale-[0.82]")}
           >
             <Icon
               strokeWidth={1.35}
