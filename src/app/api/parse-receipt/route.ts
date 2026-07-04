@@ -156,7 +156,7 @@ export async function POST(req: Request) {
         return NextResponse.json(
           {
             error:
-              "Today's free scan limit has been reached for all available models. Daily quotas reset around midnight Pacific time — please try again tomorrow.",
+              "You've hit today's free scan limit. Try again tomorrow — quotas reset overnight (Pacific time).",
             code: PARSE_ERROR_CODES.QUOTA_EXCEEDED,
             retryAfterMs: retryAfterMs ?? 60_000,
             modelsTried: uniqueModels,
@@ -171,7 +171,7 @@ export async function POST(req: Request) {
 
       return NextResponse.json(
         {
-          error: `Too many scans in a short time. Please wait about ${waitSeconds} seconds, then tap Try again.`,
+          error: `Busy moment — wait ${waitSeconds}s, then try again.`,
           code: PARSE_ERROR_CODES.RATE_LIMITED,
           retryAfterMs: retryAfterMs ?? 60_000,
         },
@@ -192,8 +192,8 @@ export async function POST(req: Request) {
       return NextResponse.json(
         {
           error: isDaily
-            ? "Today's free scan limit has been reached. Please try again tomorrow."
-            : `Too many scans in a short time. Please wait about ${Math.ceil((retryAfterMs ?? 60_000) / 1000)} seconds, then try again.`,
+            ? "You've hit today's free scan limit. Try again tomorrow — quotas reset overnight (Pacific time)."
+            : `Busy moment — wait ${Math.ceil((retryAfterMs ?? 60_000) / 1000)}s, then try again.`,
           code: isDaily
             ? PARSE_ERROR_CODES.QUOTA_EXCEEDED
             : PARSE_ERROR_CODES.RATE_LIMITED,
@@ -205,7 +205,7 @@ export async function POST(req: Request) {
 
     if (message.includes("API key not valid")) {
       return NextResponse.json(
-        { error: "Invalid GEMINI_API_KEY. Check your .env.local file." },
+        { error: "Receipt scanning isn't set up yet." },
         { status: 500 },
       );
     }

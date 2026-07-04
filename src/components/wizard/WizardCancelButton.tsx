@@ -3,18 +3,23 @@ import { WizardAction } from "@/components/wizard/WizardAction";
 interface WizardCancelButtonProps {
   onClick: () => void;
   disabled?: boolean;
+  label?: string;
 }
 
-export function WizardCancelButton({ onClick, disabled }: WizardCancelButtonProps) {
+export function WizardCancelButton({
+  onClick,
+  disabled,
+  label = "Cancel",
+}: WizardCancelButtonProps) {
   return (
     <WizardAction
       type="button"
-      variant="ghost"
+      variant="link"
       disabled={disabled}
-      className="text-foreground/80 hover:text-foreground"
+      className="h-auto min-h-0 px-2 py-1 text-xs font-medium text-muted-foreground hover:text-foreground"
       onClick={onClick}
     >
-      Cancel
+      {label}
     </WizardAction>
   );
 }

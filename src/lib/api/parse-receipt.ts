@@ -71,7 +71,7 @@ export async function parseReceiptImage(
     if (!res.ok) {
       return {
         success: false,
-        error: data.error ?? `Failed to parse receipt (${res.status})`,
+        error: data.error ?? "Couldn't read this receipt. Try a clearer photo.",
         errorCode: data.code,
         retryAfterMs: data.retryAfterMs ?? null,
       };
@@ -100,7 +100,7 @@ export async function parseReceiptImage(
     return {
       success: false,
       error:
-        error instanceof Error ? error.message : "Failed to parse receipt",
+        error instanceof Error ? error.message : "Couldn't read this receipt. Try a clearer photo.",
     };
   }
 }

@@ -16,8 +16,8 @@ export function NumberTicker({ value, className }: NumberTickerProps) {
   const reduceMotion = useReducedMotion();
   const motionValue = useMotionValue(0);
   const springValue = useSpring(motionValue, {
-    damping: 55,
-    stiffness: 90,
+    damping: 30,
+    stiffness: 200,
   });
   const isInView = useInView(ref, { once: true, margin: "-20px" });
 

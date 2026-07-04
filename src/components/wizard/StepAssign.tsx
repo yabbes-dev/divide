@@ -1,19 +1,20 @@
 "use client";
 
 import { motion } from "motion/react";
-import { Badge } from "@/components/ui/badge";
 import {
   Card,
   CardContent,
-  CardDescription,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
 import { BlurFade } from "@/components/magicui/blur-fade";
+import { InlineNotice } from "@/components/ui/inline-notice";
+import { PersonAvatar } from "@/components/wizard/PersonAvatarChip";
 import { WizardAction, WizardActions } from "@/components/wizard/WizardAction";
 import { WizardCancelButton } from "@/components/wizard/WizardCancelButton";
 import { formatCurrency, moneyClass } from "@/lib/utils/format";
 import { cn } from "@/lib/utils";
+import { wizardPanelClass } from "@/lib/wizard-styles";
 import type { WizardItem } from "@/types/wizard";
 
 interface StepAssignProps {
@@ -33,29 +34,24 @@ export function StepAssign({
   onContinue,
   onCancel,
 }: StepAssignProps) {
+  const assignedCount = items.filter((item) => item.assignedTo.length > 0).length;
+
   return (
     <div className="space-y-4">
       <BlurFade>
         <p className="text-center text-sm text-muted-foreground">
-          Tap names to assign each item. Multiple people splits the cost equally.
+          {assignedCount} of {items.length} items assigned
         </p>
       </BlurFade>
 
       <div className="space-y-3">
         {items.map((item, index) => (
           <BlurFade key={item.id} delay={index * 0.05}>
-            <Card>
+            <Card className={cn(wizardPanelClass, "rounded-none")}>
               <CardHeader className="pb-3">
                 <div className="flex items-start justify-between gap-3">
                   <div>
                     <CardTitle className="text-base">{item.name}</CardTitle>
-                    <CardDescription>
-                      {item.assignedTo.length > 1
-                        ? `Split ${formatCurrency(item.price)} between ${item.assignedTo.length} people`
-                        : item.assignedTo.length === 1
-                          ? `Assigned to ${item.assignedTo[0]}`
-                          : "Not assigned yet"}
-                    </CardDescription>
                   </div>
                   <span className={cn("shrink-0 text-base", moneyClass)}>
                     {formatCurrency(item.price)}
@@ -63,28 +59,25 @@ export function StepAssign({
                 </div>
               </CardHeader>
               <CardContent>
-                <div className="flex flex-wrap justify-center gap-2">
-                  {people.map((person) => {
+                <div className="flex flex-wrap justify-center gap-4">
+                  {people.map((person, personIndex) => {
                     const isSelected = item.assignedTo.includes(person);
                     return (
                       <motion.button
                         key={person}
                         type="button"
+                        aria-pressed={isSelected}
+                        aria-label={`${isSelected ? "Unassign" : "Assign"} ${item.name} to ${person}`}
                         onClick={() => onToggleAssignment(item.id, person)}
-                        className="min-h-10"
+                        className="min-h-11 min-w-11 rounded-none"
                         whileTap={{ scale: 0.94 }}
                         layout
                       >
-                        <Badge
-                          variant={isSelected ? "default" : "outline"}
-                          className={cn(
-                            "h-9 cursor-pointer px-3.5 text-sm transition-all duration-200",
-                            isSelected && "shadow-primary-glow",
-                            !isSelected && "hover:bg-accent",
-                          )}
-                        >
-                          {person}
-                        </Badge>
+                        <PersonAvatar
+                          name={person}
+                          colorIndex={personIndex}
+                          selected={isSelected}
+                        />
                       </motion.button>
                     );
                   })}
@@ -97,16 +90,16 @@ export function StepAssign({
 
       {!allItemsAssigned && (
         <BlurFade>
-          <p className="text-center text-sm text-amber-500">
-            Assign every item to at least one person to continue.
-          </p>
+          <InlineNotice variant="warning">
+            Assign every item to continue.
+          </InlineNotice>
         </BlurFade>
       )}
 
       <WizardActions>
         <BlurFade delay={0.1}>
           <WizardAction disabled={!allItemsAssigned} onClick={onContinue}>
-            Continue
+            See totals
           </WizardAction>
         </BlurFade>
         <WizardCancelButton onClick={onCancel} />

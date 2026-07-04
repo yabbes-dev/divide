@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
 import { toast } from "sonner";
 import { AppLayout } from "@/components/layout/AppLayout";
+import { NumberTicker } from "@/components/magicui/number-ticker";
 import { LandingPage } from "@/components/landing/LandingPage";
 import { StepAssign } from "@/components/wizard/StepAssign";
 import { StepPeople } from "@/components/wizard/StepPeople";
@@ -13,31 +14,33 @@ import { StepUpload } from "@/components/wizard/StepUpload";
 import { WizardStepTransition } from "@/components/wizard/WizardStepTransition";
 import { useSplitWizard } from "@/hooks/useSplitWizard";
 import { isRateLimitUiError } from "@/lib/api/parse-errors";
+import { moneyClass } from "@/lib/utils/format";
+import { cn } from "@/lib/utils";
 import type { WizardStep } from "@/types/wizard";
 
 const STEP_META: Record<WizardStep, { title: string; description: string }> = {
   0: {
-    title: "Upload Receipt",
-    description: "Start by adding a photo of your grocery or restaurant receipt.",
+    title: "Upload receipt",
+    description: "Snap or upload a photo of your receipt.",
   },
   1: {
-    title: "Processing",
-    description: "We're extracting items from your receipt.",
+    title: "Reading your receipt",
+    description: "This usually takes a few seconds.",
   },
   2: {
-    title: "Review Items",
-    description: "Check the extracted items and edit if needed.",
+    title: "Review items",
+    description: "Fix anything that looks off — tap to edit.",
   },
   3: {
-    title: "Add People",
-    description: "Who's sharing this bill?",
+    title: "Who's splitting?",
+    description: "Add everyone sharing this bill.",
   },
   4: {
-    title: "Assign Items",
-    description: "Choose who ordered each item.",
+    title: "Assign items",
+    description: "Tap a name for each item. Tap multiple to split evenly.",
   },
   5: {
-    title: "Summary",
+    title: "All sorted",
     description: "Here's what everyone owes.",
   },
 };
@@ -46,16 +49,28 @@ export function SplitWizard() {
   const wizard = useSplitWizard();
   const { step } = wizard;
   const meta = STEP_META[step];
+  const summaryGrandTotal = useMemo(
+    () =>
+      Object.values(wizard.personTotals).reduce(
+        (sum, amount) => sum + (amount > 0 ? amount : 0),
+        0,
+      ),
+    [wizard.personTotals],
+  );
 
   useEffect(() => {
-    if (wizard.parseError && !isRateLimitUiError(wizard.parseErrorCode)) {
+    if (
+      wizard.parseError &&
+      wizard.step !== 0 &&
+      !isRateLimitUiError(wizard.parseErrorCode)
+    ) {
       toast.error(wizard.parseError);
     }
-  }, [wizard.parseError, wizard.parseErrorCode]);
+  }, [wizard.parseError, wizard.parseErrorCode, wizard.step]);
 
   async function handleCopySummary() {
     await wizard.copySummary();
-    toast.success("Summary copied to clipboard");
+    toast.success("Copied — paste in your group chat.");
   }
 
   if (!wizard.started) {
@@ -66,6 +81,18 @@ export function SplitWizard() {
     <AppLayout
       title={meta.title}
       description={meta.description}
+      headerExtra={
+        step === 5 ? (
+          <p className="text-sm text-muted-foreground">
+            Total{" "}
+            <NumberTicker
+              value={summaryGrandTotal}
+              className={cn("font-semibold text-foreground", moneyClass)}
+            />
+          </p>
+        ) : undefined
+      }
+      step={step}
       onBack={wizard.canGoBack ? wizard.prevStep : undefined}
     >
       <WizardStepTransition stepKey={step}>
@@ -77,6 +104,7 @@ export function SplitWizard() {
             errorCode={wizard.parseErrorCode}
             retryAfterMs={wizard.retryAfterMs}
             onSelectFile={wizard.setImageFile}
+            onClearImage={wizard.clearImageFile}
             onContinue={wizard.parseReceipt}
             onCancel={wizard.cancel}
           />
@@ -91,17 +119,17 @@ export function SplitWizard() {
         )}
 
         {step === 2 && (
-        <StepPreview
-          store={wizard.receipt.store}
-          items={wizard.receipt.items}
-          receiptReferenceTotal={wizard.receipt.receiptReferenceTotal}
-          receiptTargetTotal={wizard.receipt.receiptTargetTotal}
-          onUpdateItem={wizard.updateItem}
-          onUpdateReceiptTotal={wizard.updateReceiptTotal}
-          onUpdateStore={wizard.updateStore}
-          onContinue={wizard.nextStep}
-          onCancel={wizard.cancel}
-        />
+          <StepPreview
+            store={wizard.receipt.store}
+            items={wizard.receipt.items}
+            receiptReferenceTotal={wizard.receipt.receiptReferenceTotal}
+            receiptTargetTotal={wizard.receipt.receiptTargetTotal}
+            onUpdateItem={wizard.updateItem}
+            onUpdateReceiptTotal={wizard.updateReceiptTotal}
+            onUpdateStore={wizard.updateStore}
+            onContinue={wizard.nextStep}
+            onCancel={wizard.cancel}
+          />
         )}
 
         {step === 3 && (
@@ -130,7 +158,6 @@ export function SplitWizard() {
             personTotals={wizard.personTotals}
             onCopySummary={handleCopySummary}
             onStartNew={wizard.reset}
-            onCancel={wizard.cancel}
           />
         )}
       </WizardStepTransition>

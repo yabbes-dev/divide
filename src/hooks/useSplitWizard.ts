@@ -57,6 +57,17 @@ export function useSplitWizard() {
     });
   }, []);
 
+  const clearImageFile = useCallback(() => {
+    setSelectedFile(null);
+    setParseError(null);
+    setParseErrorCode(null);
+    setRetryAfterMs(null);
+    setImagePreview((prev) => {
+      if (prev) URL.revokeObjectURL(prev);
+      return null;
+    });
+  }, []);
+
   const goToStep = useCallback((next: WizardStep) => {
     setStep(next);
   }, []);
@@ -173,7 +184,7 @@ export function useSplitWizard() {
 
     if (!result.success || !result.data) {
       setIsProcessing(false);
-      setParseError(result.error ?? "Failed to parse receipt");
+      setParseError(result.error ?? "Couldn't read this receipt. Try a clearer photo.");
       setParseErrorCode(result.errorCode ?? null);
       setRetryAfterMs(result.retryAfterMs ?? null);
       setStep(0);
@@ -240,6 +251,7 @@ export function useSplitWizard() {
     personTotals,
     allItemsAssigned,
     setImageFile,
+    clearImageFile,
     goToStep,
     nextStep,
     prevStep,
