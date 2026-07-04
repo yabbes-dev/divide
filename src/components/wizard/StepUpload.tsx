@@ -2,10 +2,11 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { motion } from "motion/react";
-import { Camera, Hourglass, ImagePlus } from "lucide-react";
+import { Camera, Hourglass, ImagePlus, X } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { BlurFade } from "@/components/magicui/blur-fade";
+import { InlineNotice } from "@/components/ui/inline-notice";
 import { WizardAction, WizardActions, wizardButtonClass } from "@/components/wizard/WizardAction";
 import { WizardCancelButton } from "@/components/wizard/WizardCancelButton";
 import { DinoGame } from "@/components/games/DinoGame";
@@ -14,6 +15,7 @@ import {
   isRateLimitUiError,
 } from "@/lib/api/parse-errors";
 import { cn } from "@/lib/utils";
+import { wizardPanelClass } from "@/lib/wizard-styles";
 
 interface StepUploadProps {
   imagePreview: string | null;
@@ -22,6 +24,7 @@ interface StepUploadProps {
   errorCode?: string | null;
   retryAfterMs?: number | null;
   onSelectFile: (file: File) => void;
+  onClearImage: () => void;
   onContinue: () => void;
   onCancel: () => void;
 }
@@ -66,21 +69,30 @@ export function StepUpload({
   errorCode,
   retryAfterMs,
   onSelectFile,
+  onClearImage,
   onContinue,
   onCancel,
 }: StepUploadProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
   const [isDragging, setIsDragging] = useState(false);
+  const [fileJustSelected, setFileJustSelected] = useState(false);
   const { secondsLeft, canRetry } = useRetryCountdown(retryAfterMs);
 
   const handleFile = useCallback(
     (file: File | undefined) => {
       if (!file?.type.startsWith("image/")) return;
       onSelectFile(file);
+      setFileJustSelected(true);
     },
     [onSelectFile],
   );
+
+  useEffect(() => {
+    if (!fileJustSelected) return;
+    const id = window.setTimeout(() => setFileJustSelected(false), 300);
+    return () => window.clearTimeout(id);
+  }, [fileJustSelected]);
 
   function handleFileInputChange(
     event: React.ChangeEvent<HTMLInputElement>,
@@ -113,11 +125,12 @@ export function StepUpload({
   return (
     <div className="space-y-4">
       <BlurFade>
-        <Card>
+        <Card className={wizardPanelClass}>
           <CardContent className="space-y-4 pt-4">
             <motion.div
               role="button"
               tabIndex={0}
+              aria-label="Upload receipt photo"
               onClick={openGallery}
               onKeyDown={(e) => e.key === "Enter" && openGallery()}
               onDragOver={(e) => {
@@ -139,25 +152,46 @@ export function StepUpload({
                     }
               }
               transition={{ duration: 0.2 }}
-              className="flex min-h-48 cursor-pointer flex-col items-center justify-center gap-3 border-2 border-dashed p-6"
+              className="flex min-h-48 cursor-pointer flex-col items-center justify-center gap-3 rounded-[0.625rem] border-2 border-dashed p-6"
             >
               {imagePreview ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
-                  src={imagePreview}
-                  alt="Receipt preview"
-                  className="max-h-48 w-full object-contain"
-                />
+                <div className="relative w-full">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <motion.img
+                    src={imagePreview}
+                    alt="Receipt preview"
+                    className="max-h-48 w-full object-contain"
+                    initial={false}
+                    animate={fileJustSelected ? { y: [0, -4, 0] } : { y: 0 }}
+                    transition={{ duration: 0.15 }}
+                  />
+                  <button
+                    type="button"
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      onClearImage();
+                    }}
+                    disabled={isLoading}
+                    className="absolute right-0 top-0 flex size-8 items-center justify-center rounded-full border border-border bg-background/95 text-muted-foreground shadow-sm backdrop-blur-sm transition-colors hover:bg-muted hover:text-foreground disabled:opacity-50"
+                    aria-label="Remove receipt photo"
+                  >
+                    <X className="size-4" />
+                  </button>
+                </div>
               ) : (
                 <>
-                  <div className="flex size-12 items-center justify-center text-primary">
+                  <motion.div
+                    className="flex size-12 items-center justify-center text-primary"
+                    animate={fileJustSelected ? { y: [0, -4, 0] } : { y: 0 }}
+                    transition={{ duration: 0.15 }}
+                  >
                     <ImagePlus className="size-6" />
-                  </div>
+                  </motion.div>
                   <p className="text-center text-sm font-medium text-foreground">
-                    Upload
+                    Tap to upload
                   </p>
                   <p className="max-w-xs text-center text-xs text-muted-foreground">
-                    Use a flat, well-lit photo so prices are easy to read.
+                    Flat, well-lit photos read best.
                   </p>
                 </>
               )}
@@ -186,11 +220,11 @@ export function StepUpload({
                 type="button"
                 variant="outline"
                 disabled={isLoading}
-                className={cn(wizardButtonClass, "w-auto")}
+                className={cn(wizardButtonClass, "min-h-11 w-auto")}
                 onClick={openCamera}
               >
                 <Camera className="size-4" />
-                Take Photo
+                Use camera
               </Button>
             </div>
           </CardContent>
@@ -200,7 +234,7 @@ export function StepUpload({
       {error && (
         <BlurFade>
           {isRateLimitError ? (
-            <Card className="relative overflow-hidden border-primary/25 shadow-card">
+            <Card className={cn(wizardPanelClass, "relative overflow-hidden border-primary/40 shadow-card")}>
               <div
                 className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-primary/60 to-transparent"
                 aria-hidden
@@ -230,9 +264,7 @@ export function StepUpload({
               </CardContent>
             </Card>
           ) : (
-            <div className="space-y-4 rounded-lg border border-destructive/30 bg-destructive/5 px-4 py-4">
-              <p className="text-center text-sm text-destructive">{error}</p>
-            </div>
+            <InlineNotice variant="error">{error}</InlineNotice>
           )}
         </BlurFade>
       )}
@@ -241,12 +273,12 @@ export function StepUpload({
         <BlurFade delay={0.08}>
           <WizardAction disabled={tryAgainDisabled} onClick={onContinue}>
             {isLoading
-              ? "Processing..."
+              ? "Uploading…"
               : isRateLimitError
                 ? canRetry
                   ? "Try again"
                   : `Wait ${formatRetryCountdown(secondsLeft)}`
-                : "Continue"}
+                : "Read receipt"}
           </WizardAction>
         </BlurFade>
         <WizardCancelButton onClick={onCancel} disabled={isLoading} />

@@ -34,6 +34,7 @@ export const ShimmerButton = forwardRef<HTMLButtonElement, ShimmerButtonProps>(
           "rounded-none bg-primary font-semibold text-primary-foreground",
           "px-6 py-0",
           "shadow-primary-glow transition-transform active:scale-[0.98]",
+          "outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50",
           "disabled:pointer-events-none disabled:opacity-50 disabled:shadow-none",
           className,
         )}

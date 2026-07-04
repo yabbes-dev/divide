@@ -11,7 +11,7 @@ export async function compressImageForUpload(file: File): Promise<File> {
   // HEIC/HEIF often fails in canvas — ask user to convert
   if (file.type === "image/heic" || file.type === "image/heif") {
     throw new Error(
-      "HEIC photos are not supported. Please use JPEG or PNG, or take a screenshot of the receipt.",
+      "This photo format isn't supported. Take a screenshot of the receipt instead.",
     );
   }
 

@@ -25,7 +25,13 @@ export function WizardActions({
   className?: string;
 }) {
   return (
-    <div className={cn("flex w-full flex-col items-center gap-3", className)}>
+    <div
+      className={cn(
+        "flex w-full flex-col items-stretch gap-2",
+        "sticky bottom-0 z-10 py-3",
+        className,
+      )}
+    >
       {children}
     </div>
   );

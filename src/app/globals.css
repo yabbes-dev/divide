@@ -40,6 +40,13 @@
   --color-background: var(--background);
   --color-surface-elevated: var(--surface-elevated);
   --color-surface-sunken: var(--surface-sunken);
+  --color-surface-receipt: var(--surface-receipt);
+  --color-success: var(--success);
+  --color-success-subtle: var(--success-subtle);
+  --color-warning: var(--warning);
+  --color-warning-subtle: var(--warning-subtle);
+  --color-info: var(--info);
+  --color-info-subtle: var(--info-subtle);
   --color-money: var(--money);
   --color-money-muted: var(--money-muted);
   --radius-sm: calc(var(--radius) * 0.6);
@@ -79,6 +86,21 @@
   --radius: 0;
   --surface-elevated: oklch(1 0 0);
   --surface-sunken: oklch(0.965 0.01 250);
+  --surface-receipt: oklch(1 0 0);
+  --surface-receipt-foreground: oklch(0.12 0.03 250);
+  --surface-receipt-muted: oklch(0.45 0.03 250);
+  --surface-receipt-border: oklch(0.88 0.02 250);
+  --success: oklch(0.55 0.14 155);
+  --success-subtle: oklch(0.55 0.14 155 / 12%);
+  --warning: oklch(0.62 0.14 75);
+  --warning-subtle: oklch(0.62 0.14 75 / 12%);
+  --info: oklch(0.50 0.18 262);
+  --info-subtle: oklch(0.50 0.18 262 / 10%);
+  --motion-fast: 150ms;
+  --motion-base: 320ms;
+  --motion-slow: 450ms;
+  --motion-stagger: 70ms;
+  --motion-ease: cubic-bezier(0.22, 1, 0.36, 1);
   --money: oklch(0.12 0.03 250);
   --money-muted: oklch(0.40 0.03 250);
   --shadow-card: 0 1px 2px oklch(0 0 0 / 5%), 0 8px 24px oklch(0 0 0 / 7%);
@@ -123,6 +145,21 @@
   --radius: 0;
   --surface-elevated: oklch(0.17 0.024 250);
   --surface-sunken: oklch(0.13 0.02 250);
+  --surface-receipt: oklch(0.22 0.02 250);
+  --surface-receipt-foreground: oklch(0.98 0.006 250);
+  --surface-receipt-muted: oklch(0.74 0.02 250);
+  --surface-receipt-border: oklch(1 0 0 / 14%);
+  --success: oklch(0.65 0.14 155);
+  --success-subtle: oklch(0.65 0.14 155 / 15%);
+  --warning: oklch(0.72 0.12 75);
+  --warning-subtle: oklch(0.72 0.12 75 / 15%);
+  --info: oklch(0.62 0.19 262);
+  --info-subtle: oklch(0.62 0.19 262 / 12%);
+  --motion-fast: 150ms;
+  --motion-base: 320ms;
+  --motion-slow: 450ms;
+  --motion-stagger: 70ms;
+  --motion-ease: cubic-bezier(0.22, 1, 0.36, 1);
   --money: oklch(0.98 0.006 250);
   --money-muted: oklch(0.74 0.02 250);
   --shadow-card: 0 1px 0 oklch(1 0 0 / 8%), 0 8px 32px oklch(0 0 0 / 45%);
@@ -174,7 +211,23 @@
   }
 
   .text-money {
-    @apply font-semibold tracking-tight text-money tabular-nums;
+    @apply font-semibold tracking-tight text-money tabular-nums leading-tight;
+  }
+
+  .text-receipt-muted {
+    color: var(--surface-receipt-muted);
+  }
+
+  .bg-surface-receipt {
+    background-color: var(--surface-receipt);
+  }
+
+  .text-surface-receipt-foreground {
+    color: var(--surface-receipt-foreground);
+  }
+
+  .border-receipt {
+    border-color: var(--surface-receipt-border);
   }
 
   .shadow-card {
@@ -183,6 +236,25 @@
 
   .shadow-primary-glow {
     box-shadow: 0 4px 14px var(--glow-primary);
+  }
+
+  /** Subtle dark-tinted panel for wizard content cards (upload, assign, summary). */
+  .wizard-panel {
+    border-color: color-mix(in oklch, var(--border) 40%, var(--foreground) 60%);
+    background: linear-gradient(
+      168deg,
+      color-mix(in oklch, var(--card) 94%, var(--foreground)) 0%,
+      color-mix(in oklch, var(--card) 80%, var(--foreground)) 100%
+    );
+  }
+
+  .dark .wizard-panel {
+    border-color: color-mix(in oklch, var(--border) 30%, oklch(0.48 0.02 250) 70%);
+    background: linear-gradient(
+      168deg,
+      color-mix(in oklch, var(--card) 100%, transparent) 0%,
+      color-mix(in oklch, var(--card) 68%, black) 100%
+    );
   }
 
   .animate-shimmer {
@@ -195,6 +267,18 @@
 
   .animate-border-beam {
     animation: border-beam calc(var(--duration, 12) * 1s) infinite linear;
+  }
+
+  .animate-float-drift {
+    animation: float-drift var(--float-duration, 14s) ease-in-out infinite;
+    animation-delay: var(--float-delay, 0s);
+    will-change: transform;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .animate-float-drift {
+      animation: none;
+    }
   }
 }
 
@@ -220,5 +304,20 @@
 @keyframes border-beam {
   100% {
     offset-distance: 100%;
+  }
+}
+
+@keyframes float-drift {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0) rotate(var(--float-rotate, 0deg));
+  }
+  33% {
+    transform: translate3d(var(--float-x, 4px), -14px, 0)
+      rotate(calc(var(--float-rotate, 0deg) + 4deg));
+  }
+  66% {
+    transform: translate3d(calc(var(--float-x, 4px) * -0.5), -6px, 0)
+      rotate(calc(var(--float-rotate, 0deg) - 2deg));
   }
 }

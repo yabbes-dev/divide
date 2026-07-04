@@ -3,15 +3,19 @@
 import Link from "next/link";
 import { ChevronLeft } from "lucide-react";
 import { DivideLogo } from "@/components/brand/DivideLogo";
-import { DotPattern } from "@/components/magicui/dot-pattern";
+import { FloatingBackground } from "@/components/layout/FloatingBackground";
 import { ThemeToggle } from "@/components/layout/ThemeToggle";
 import { Button } from "@/components/ui/button";
+import { WizardProgress } from "@/components/wizard/WizardProgress";
 import { cn } from "@/lib/utils";
+import type { WizardStep } from "@/types/wizard";
 
 interface AppLayoutProps {
   children: React.ReactNode;
   title?: string;
   description?: string;
+  headerExtra?: React.ReactNode;
+  step?: WizardStep;
   className?: string;
   onBack?: () => void;
 }
@@ -20,12 +24,14 @@ export function AppLayout({
   children,
   title,
   description,
+  headerExtra,
+  step,
   className,
   onBack,
 }: AppLayoutProps) {
   return (
     <div className="app-shell relative flex min-h-dvh w-full flex-col overflow-hidden">
-      <DotPattern className="opacity-30 dark:opacity-40" />
+      <FloatingBackground />
       <header className="sticky top-0 z-40 border-b border-border/40 bg-background/60 pt-[env(safe-area-inset-top)] backdrop-blur-xl">
         <div className="relative mx-auto flex h-14 w-full max-w-lg items-center justify-center px-4">
           {onBack && (
@@ -57,14 +63,16 @@ export function AppLayout({
             className,
           )}
         >
-          {(title || description) && (
-            <div className="text-center">
+          {(title || description || headerExtra) && (
+            <div className="space-y-3 text-center">
+              {step != null && <WizardProgress step={step} />}
               {title && <h1 className="text-title">{title}</h1>}
               {description && (
-                <p className="mx-auto mt-2 max-w-sm text-sm leading-relaxed text-muted-foreground">
+                <p className="mx-auto max-w-sm text-sm leading-relaxed text-muted-foreground">
                   {description}
                 </p>
               )}
+              {headerExtra}
             </div>
           )}
           <div className="flex w-full flex-col items-stretch gap-4">{children}</div>
