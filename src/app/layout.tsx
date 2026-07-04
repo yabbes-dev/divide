@@ -44,7 +44,10 @@ export default function RootLayout({
       className={cn("font-sans", plusJakarta.variable, spaceGrotesk.variable)}
       suppressHydrationWarning
     >
-      <body className="min-h-dvh w-full overflow-x-hidden antialiased">
+      <body
+        className="min-h-dvh w-full overflow-x-hidden antialiased"
+        suppressHydrationWarning
+      >
         <ThemeProvider>
           {children}
           <Toaster position="top-center" richColors closeButton />
