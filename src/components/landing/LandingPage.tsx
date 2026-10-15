@@ -9,6 +9,7 @@ import { FloatingBackground } from "@/components/layout/FloatingBackground";
 import { TypewriterText } from "@/components/magicui/typewriter-text";
 import { CurrencySelect } from "@/components/landing/CurrencySelect";
 import { HeaderActions } from "@/components/profile/HeaderActions";
+import { useProfile } from "@/components/profile/ProfileProvider";
 import { WizardAction } from "@/components/wizard/WizardAction";
 
 interface LandingPageProps {
@@ -17,6 +18,7 @@ interface LandingPageProps {
 
 export function LandingPage({ onGetStarted }: LandingPageProps) {
   const reduceMotion = useReducedMotion();
+  const { profile, status, openAuth } = useProfile();
 
   return (
     <div className="app-shell relative flex min-h-dvh w-full flex-col overflow-hidden pt-[env(safe-area-inset-top)]">
@@ -55,6 +57,18 @@ export function LandingPage({ onGetStarted }: LandingPageProps) {
                 Split a receipt
               </WizardAction>
             </div>
+            {status === "ready" && !profile && (
+              <p className="text-center text-xs text-muted-foreground">
+                Regular user? Now you can save groups.{" "}
+                <button
+                  type="button"
+                  className="font-medium underline underline-offset-4 hover:text-foreground"
+                  onClick={() => openAuth("create")}
+                >
+                  Sign up
+                </button>
+              </p>
+            )}
           </div>
         </BlurFade>
       </main>

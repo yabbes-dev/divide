@@ -39,6 +39,23 @@ OTHER:
 - Return ONLY the JSON object — no markdown, no explanation.`;
 }
 
+/** Second read when the first item totals do not match the printed footer. */
+export function buildReceiptRepairPrompt(
+  previousJson: string,
+  itemSum: number,
+  referenceTotal: number,
+): string {
+  return `${buildReceiptParsePrompt()}
+
+The previous read does not add up.
+Item line totals sum to ${itemSum.toFixed(2)}, but the printed footer total is ${referenceTotal.toFixed(2)}.
+Re-read the image. Fix swapped unit prices and line totals, missed items, and discount lines.
+Previous JSON:
+${previousJson}
+
+Return ONLY the corrected JSON object.`;
+}
+
 /** Groq vision models reject system messages when images are present — use as user text. */
 export function buildGroqReceiptParsePrompt(): string {
   return `${buildReceiptParsePrompt()}

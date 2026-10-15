@@ -27,6 +27,8 @@ interface ProfileContextValue {
   groups: SavedGroup[];
   open: boolean;
   setOpen: (open: boolean) => void;
+  openAuth: (mode: "signin" | "create") => void;
+  authMode: "signin" | "create";
   signup: (username: string, code: string) => Promise<string | null>;
   login: (username: string, code: string) => Promise<string | null>;
   logout: () => Promise<string | null>;
@@ -42,7 +44,18 @@ export function ProfileProvider({ children }: { children: React.ReactNode }) {
   const [setupError, setSetupError] = useState<string | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [groups, setGroups] = useState<SavedGroup[]>([]);
-  const [open, setOpen] = useState(false);
+  const [open, setOpenState] = useState(false);
+  const [authMode, setAuthMode] = useState<"signin" | "create">("signin");
+
+  const setOpen = useCallback((next: boolean) => {
+    setOpenState(next);
+    if (!next) setAuthMode("signin");
+  }, []);
+
+  const openAuth = useCallback((mode: "signin" | "create") => {
+    setAuthMode(mode);
+    setOpenState(true);
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -124,6 +137,8 @@ export function ProfileProvider({ children }: { children: React.ReactNode }) {
       groups,
       open,
       setOpen,
+      openAuth,
+      authMode,
       signup,
       login,
       logout,
@@ -137,6 +152,8 @@ export function ProfileProvider({ children }: { children: React.ReactNode }) {
       profile,
       groups,
       open,
+      openAuth,
+      authMode,
       signup,
       login,
       logout,

@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { Trash2 } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { Loader2, Trash2 } from "lucide-react";
 
 import { useProfile } from "@/components/profile/ProfileProvider";
 import { InlineNotice } from "@/components/ui/inline-notice";
@@ -29,7 +29,7 @@ const textLinkClass =
 
 export function ProfileSheet() {
   const profileState = useProfile();
-  const { profile, groups, open, setOpen, configured, setupError } = profileState;
+  const { profile, groups, open, setOpen, authMode, configured, setupError } = profileState;
   const [mode, setMode] = useState<"create" | "signin">("signin");
   const [username, setUsername] = useState("");
   const [code, setCode] = useState("");
@@ -40,6 +40,12 @@ export function ProfileSheet() {
   const [memberName, setMemberName] = useState("");
   const [members, setMembers] = useState<string[]>([]);
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
+  const [hidingAuth, setHidingAuth] = useState(false);
+  const loggingOut = useRef(false);
+
+  useEffect(() => {
+    if (open) setMode(authMode);
+  }, [open, authMode]);
 
   function resetAuthForm() {
     setUsername("");
@@ -64,11 +70,14 @@ export function ProfileSheet() {
   function finishGroupForm() {
     clearGroupDraft();
     setCreatingGroup(false);
-    setOpen(true);
+    if (!loggingOut.current) setOpen(true);
   }
+
+  const canSubmitAuth = username.trim().length > 0 && code.length === 4;
 
   async function handleAuth(event: React.FormEvent) {
     event.preventDefault();
+    if (!canSubmitAuth) return;
     setBusy(true);
     setError(null);
     const message =
@@ -122,16 +131,26 @@ export function ProfileSheet() {
   }
 
   async function handleLogout() {
+    loggingOut.current = true;
+    setHidingAuth(true);
+    setOpen(false);
+    setCreatingGroup(false);
     setBusy(true);
     const message = await profileState.logout();
     setBusy(false);
+    clearGroupDraft();
+    resetAuthForm();
     if (message) {
+      loggingOut.current = false;
+      setHidingAuth(false);
       setError(message);
+      setOpen(true);
       return;
     }
-    clearGroupDraft();
-    setCreatingGroup(false);
-    resetAuthForm();
+    window.setTimeout(() => {
+      loggingOut.current = false;
+      setHidingAuth(false);
+    }, 250);
   }
 
   return (
@@ -139,6 +158,7 @@ export function ProfileSheet() {
     <Dialog
       open={open}
       onOpenChange={(next) => {
+        if (loggingOut.current && next) return;
         setOpen(next);
         if (!next) {
           setError(null);
@@ -153,9 +173,15 @@ export function ProfileSheet() {
             <ProfileInitial name={profile.username} className="mb-1" />
           )}
           <DialogTitle className="text-xl font-semibold tracking-tight">
-            {profile ? profile.username : mode === "create" ? "Sign up" : "Sign in"}
+            {hidingAuth
+              ? ""
+              : profile
+                ? profile.username
+                : mode === "create"
+                  ? "Sign up"
+                  : "Sign in"}
           </DialogTitle>
-          {profile && (
+          {profile && !hidingAuth && (
             <DialogDescription>
               Saved groups show up the next time you split a bill.
             </DialogDescription>
@@ -170,7 +196,7 @@ export function ProfileSheet() {
           )}
           {setupError && <InlineNotice variant="error">{setupError}</InlineNotice>}
 
-          {profile ? (
+          {hidingAuth ? null : profile ? (
             <div className="space-y-4">
               {groups.length > 0 ? (
                 <ul className="space-y-3">
@@ -241,26 +267,28 @@ export function ProfileSheet() {
               <WizardCancelButton label="Sign out" disabled={busy} onClick={handleLogout} />
             </div>
           ) : (
-            <form className="space-y-4" onSubmit={handleAuth}>
-              <label className="block space-y-1.5" htmlFor="profile-username">
+            <form className="space-y-4" onSubmit={handleAuth} aria-busy={busy}>
+              <label className="flex flex-col gap-3" htmlFor="profile-username">
                 <span className="text-sm font-medium">Username</span>
                 <Input
                   id="profile-username"
                   value={username}
                   autoComplete="username"
+                  disabled={busy}
                   onChange={(event) => setUsername(event.target.value)}
                   placeholder="e.g. Alex"
                   className="h-11"
                 />
               </label>
 
-              <label className="block space-y-1.5" htmlFor="profile-code">
+              <label className="flex flex-col gap-3" htmlFor="profile-code">
                 <span className="text-sm font-medium">4-digit code</span>
                 <Input
                   id="profile-code"
                   value={code}
                   inputMode="numeric"
                   autoComplete="off"
+                  disabled={busy}
                   maxLength={4}
                   pattern="[0-9]*"
                   onChange={(event) => setCode(event.target.value.replace(/\D/g, "").slice(0, 4))}
@@ -271,16 +299,32 @@ export function ProfileSheet() {
               {error && <InlineNotice variant="error">{error}</InlineNotice>}
 
               <div className="flex flex-col items-center gap-2">
-                <WizardAction type="submit" disabled={busy || !configured}>
-                  {mode === "create" ? "Sign up" : "Sign in"}
+                <WizardAction type="submit" disabled={busy || !configured || !canSubmitAuth}>
+                  {busy ? (
+                    <span className="inline-flex items-center gap-2">
+                      <Loader2 className="size-4 animate-spin" />
+                      {mode === "create" ? "Signing up…" : "Signing in…"}
+                    </span>
+                  ) : mode === "create" ? (
+                    "Sign up"
+                  ) : (
+                    "Sign in"
+                  )}
                 </WizardAction>
-                <WizardCancelButton
-                  label={mode === "signin" ? "Sign up" : "Sign in"}
-                  onClick={() => {
-                    setMode(mode === "signin" ? "create" : "signin");
-                    setError(null);
-                  }}
-                />
+                <p className="text-center text-xs text-muted-foreground">
+                  {mode === "signin" ? "Don't have a profile?" : "Already have a profile?"}{" "}
+                  <button
+                    type="button"
+                    className="font-medium underline underline-offset-4 hover:text-foreground disabled:pointer-events-none disabled:opacity-50"
+                    disabled={busy}
+                    onClick={() => {
+                      setMode(mode === "signin" ? "create" : "signin");
+                      setError(null);
+                    }}
+                  >
+                    {mode === "signin" ? "Sign up" : "Sign in"}
+                  </button>
+                </p>
               </div>
             </form>
           )}
@@ -299,7 +343,7 @@ export function ProfileSheet() {
           <DialogTitle className="text-xl font-semibold tracking-tight">New group</DialogTitle>
         </DialogHeader>
         <form className="space-y-4" onSubmit={handleCreateGroup}>
-          <label className="block space-y-1.5">
+          <label className="flex flex-col gap-3">
             <span className="text-sm font-medium">Group name</span>
             <Input
               value={groupName}
@@ -308,7 +352,7 @@ export function ProfileSheet() {
               className="h-11"
             />
           </label>
-          <label className="block space-y-1.5">
+          <label className="flex flex-col gap-3">
             <span className="text-sm font-medium">People</span>
             <div className="flex gap-2">
               <Input

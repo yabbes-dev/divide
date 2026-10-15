@@ -1,3 +1,4 @@
+import { buildReceiptRepairPrompt } from "@/lib/ai/prompt";
 import {
   isDailyQuotaMessage,
   maxRetryDelayMs,
@@ -15,7 +16,14 @@ import type {
   ParseReceiptImageInput,
   ParseReceiptSuccess,
 } from "@/lib/ai/providers/types";
+import {
+  getReceiptReferenceTotal,
+  hasTotalMismatch,
+  parseReceiptJson,
+  sumItemLineTotals,
+} from "@/lib/api/parse-receipt-mapper";
 import { PARSE_ERROR_CODES } from "@/lib/api/parse-errors";
+import type { ParsedReceiptApiResponse } from "@/types/parse-receipt";
 
 export interface ParseReceiptServerError {
   status: number;
@@ -40,7 +48,10 @@ export async function parseReceiptWithFallbacks(
     const geminiResult = await parseReceiptWithGemini(input);
 
     if (geminiResult.type === "success") {
-      return { type: "success", data: geminiResult.result };
+      return {
+        type: "success",
+        data: await repairIfTotalsDisagree(input, geminiResult.result),
+      };
     }
 
     const geminiFailure = geminiResult.failure;
@@ -48,7 +59,10 @@ export async function parseReceiptWithFallbacks(
     if (shouldTryGroqFallback() && geminiFailure.shouldFallback) {
       const groqResult = await parseReceiptWithGroq(input);
       if (groqResult.type === "success") {
-        return { type: "success", data: groqResult.result };
+        return {
+          type: "success",
+          data: await repairIfTotalsDisagree(input, groqResult.result),
+        };
       }
 
       return buildRateLimitOrGenericError(
@@ -85,7 +99,10 @@ export async function parseReceiptWithFallbacks(
   if (shouldTryGroqFallback()) {
     const groqResult = await parseReceiptWithGroq(input);
     if (groqResult.type === "success") {
-      return { type: "success", data: groqResult.result };
+      return {
+        type: "success",
+        data: await repairIfTotalsDisagree(input, groqResult.result),
+      };
     }
 
     if (groqResult.failure.rateLimitMessages.length > 0) {
@@ -114,6 +131,61 @@ export async function parseReceiptWithFallbacks(
       error: `Receipt scanning isn't configured. ${process.env.NODE_ENV === "development" ? "Add GEMINI_API_KEY and/or GROQ_API_KEY to .env.local." : "Configure API keys on the server."}`,
     },
   };
+}
+
+function totalDelta(parsed: ParsedReceiptApiResponse): number | null {
+  const reference = getReceiptReferenceTotal(parsed);
+  if (reference == null) return null;
+  return Math.abs(sumItemLineTotals(parsed.items) - reference);
+}
+
+/** One extra read on the same model when item totals miss the printed footer. */
+async function repairIfTotalsDisagree(
+  input: ParseReceiptImageInput,
+  first: ParseReceiptSuccess,
+): Promise<ParseReceiptSuccess> {
+  let parsed: ParsedReceiptApiResponse;
+  try {
+    parsed = parseReceiptJson(first.raw);
+  } catch {
+    return first;
+  }
+
+  if (!hasTotalMismatch(parsed)) return first;
+
+  const reference = getReceiptReferenceTotal(parsed);
+  const originalDelta = totalDelta(parsed);
+  if (reference == null || originalDelta == null) return first;
+
+  const repairInput: ParseReceiptImageInput = {
+    ...input,
+    model: first.model,
+    prompt: buildReceiptRepairPrompt(
+      first.raw,
+      sumItemLineTotals(parsed.items),
+      reference,
+    ),
+    singleAttempt: true,
+  };
+
+  const repair =
+    first.provider === "groq"
+      ? await parseReceiptWithGroq(repairInput)
+      : await parseReceiptWithGemini(repairInput);
+
+  if (repair.type !== "success") return first;
+
+  try {
+    const repaired = parseReceiptJson(repair.result.raw);
+    const repairedDelta = totalDelta(repaired);
+    if (repairedDelta != null && repairedDelta < originalDelta) {
+      return repair.result;
+    }
+  } catch {
+    return first;
+  }
+
+  return first;
 }
 
 function buildRateLimitOrGenericError(

@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { ProfileInitial } from "@/components/profile/ProfileInitial";
 
 export function HeaderActions() {
-  const { profile, status, setOpen } = useProfile();
+  const { profile, status, openAuth } = useProfile();
 
   return (
     <>
@@ -19,7 +19,7 @@ export function HeaderActions() {
         size="icon"
         className="size-9 shrink-0 overflow-visible p-0 text-muted-foreground hover:text-foreground"
         aria-label={profile ? `Profile, ${profile.username}` : "Profile"}
-        onClick={() => setOpen(true)}
+        onClick={() => openAuth("signin")}
       >
         {status === "ready" && profile ? (
           <ProfileInitial name={profile.username} size="sm" />

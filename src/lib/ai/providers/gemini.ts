@@ -16,8 +16,9 @@ import type {
 } from "@/lib/ai/providers/types";
 
 const DEFAULT_MODEL_FALLBACKS = [
-  "gemini-3.5-flash",
-  "gemini-3-flash-preview",
+  "gemini-3.8-flash",
+  "gemini-3.6-flash",
+  "gemini-3.5-flash-lite",
   "gemini-3.1-flash-lite",
   "gemini-2.5-flash",
   "gemini-2.5-flash-lite",
@@ -33,7 +34,8 @@ function sleep(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-function getModelList(): string[] {
+function getModelList(onlyModel?: string): string[] {
+  if (onlyModel) return [onlyModel];
   return [
     ...new Set(
       [process.env.GEMINI_MODEL, ...DEFAULT_MODEL_FALLBACKS].filter(
@@ -69,13 +71,15 @@ export async function parseReceiptWithGemini(
     inlineData: { mimeType: input.mimeType, data: input.imageBase64 },
   };
 
-  const models = getModelList();
+  const models = getModelList(input.model);
+  const prompt = input.prompt ?? RECEIPT_PROMPT;
+  const maxAttempts = input.singleAttempt ? 1 : MAX_RETRIES;
   let lastError: Error | null = null;
   const rateLimitMessages: string[] = [];
   let sawRetryableFailure = false;
 
   for (const modelName of models) {
-    for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
+    for (let attempt = 0; attempt < maxAttempts; attempt++) {
       try {
         const model = genAI.getGenerativeModel({
           model: modelName,
@@ -85,7 +89,7 @@ export async function parseReceiptWithGemini(
             responseSchema: RECEIPT_SCHEMA,
           },
         });
-        const result = await model.generateContent([RECEIPT_PROMPT, imagePart]);
+        const result = await model.generateContent([prompt, imagePart]);
         const text = result.response.text();
         const validation = validateReceiptResponse(text);
 
@@ -126,7 +130,7 @@ export async function parseReceiptWithGemini(
 
         if (isTemporaryOverloadMessage(message)) {
           sawRetryableFailure = true;
-          const isLastAttempt = attempt === MAX_RETRIES - 1;
+          const isLastAttempt = attempt === maxAttempts - 1;
           if (!isLastAttempt) {
             const delay = RETRY_BASE_MS * (attempt + 1);
             console.warn(

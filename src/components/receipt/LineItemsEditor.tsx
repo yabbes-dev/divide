@@ -34,7 +34,7 @@ export function LineItemsEditor({
       description="Check that everything was extracted correctly."
     >
       {storeName && onUpdateStoreName && (
-        <div className="mb-4 space-y-1.5">
+        <div className="mb-4 flex flex-col gap-3">
           <label htmlFor="store-name" className="text-sm font-medium">
             Store
           </label>

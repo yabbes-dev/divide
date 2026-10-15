@@ -18,6 +18,7 @@ interface AppLayoutProps {
   step?: WizardStep;
   className?: string;
   onBack?: () => void;
+  onHome?: () => void;
 }
 
 export function AppLayout({
@@ -28,6 +29,7 @@ export function AppLayout({
   step,
   className,
   onBack,
+  onHome,
 }: AppLayoutProps) {
   return (
     <div className="app-shell relative flex min-h-dvh w-full flex-col overflow-hidden">
@@ -46,9 +48,20 @@ export function AppLayout({
               Back
             </Button>
           )}
-          <Link href="/" className="text-foreground" aria-label="Divide home">
-            <DivideLogo variant="mark" size={28} />
-          </Link>
+          {onHome ? (
+            <button
+              type="button"
+              onClick={onHome}
+              className="cursor-pointer border-0 bg-transparent p-0 text-foreground"
+              aria-label="Divide home"
+            >
+              <DivideLogo variant="mark" size={28} />
+            </button>
+          ) : (
+            <Link href="/" className="text-foreground" aria-label="Divide home">
+              <DivideLogo variant="mark" size={28} />
+            </Link>
+          )}
           <div className="absolute right-2 top-1/2 flex -translate-y-1/2 items-center">
             <HeaderActions />
           </div>

@@ -13,8 +13,7 @@ import type {
 const GROQ_API_URL = "https://api.groq.com/openai/v1/chat/completions";
 
 const DEFAULT_GROQ_MODELS = [
-  "llama-3.2-11b-vision-preview",
-  "llama-3.2-90b-vision-preview",
+  "meta-llama/llama-4-scout-17b-16e-instruct",
 ] as const;
 
 const MAX_RETRIES = 2;
@@ -38,7 +37,8 @@ export function shouldTryGroqFallback(): boolean {
   return isGroqFallbackEnabled();
 }
 
-function getGroqModelList(): string[] {
+function getGroqModelList(onlyModel?: string): string[] {
+  if (onlyModel) return [onlyModel];
   const override = process.env.GROQ_MODEL;
   return [
     ...new Set(
@@ -121,14 +121,15 @@ export async function parseReceiptWithGroq(
     };
   }
 
-  const models = getGroqModelList();
-  const prompt = buildGroqReceiptParsePrompt();
+  const models = getGroqModelList(input.model);
+  const prompt = input.prompt ?? buildGroqReceiptParsePrompt();
+  const maxAttempts = input.singleAttempt ? 1 : MAX_RETRIES;
   let lastError: Error | null = null;
   const rateLimitMessages: string[] = [];
   let sawRetryableFailure = false;
 
   for (const modelName of models) {
-    for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
+    for (let attempt = 0; attempt < maxAttempts; attempt++) {
       try {
         const text = await callGroqVision(apiKey, modelName, input, prompt);
         const validation = validateReceiptResponse(text);
@@ -170,7 +171,7 @@ export async function parseReceiptWithGroq(
 
         if (isTemporaryOverloadMessage(message)) {
           sawRetryableFailure = true;
-          const isLastAttempt = attempt === MAX_RETRIES - 1;
+          const isLastAttempt = attempt === maxAttempts - 1;
           if (!isLastAttempt) {
             await sleep(RETRY_BASE_MS * (attempt + 1));
             continue;

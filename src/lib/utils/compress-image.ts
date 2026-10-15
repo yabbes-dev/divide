@@ -1,6 +1,6 @@
 const MAX_UPLOAD_BYTES = 4 * 1024 * 1024; // 4MB raw file limit before compression
 const TARGET_MAX_BYTES = 2 * 1024 * 1024; // aim under this after compression
-const MAX_DIMENSION = 2400; // higher resolution helps OCR read small prices
+const MAX_DIMENSION = 1600; // long edge; sharp enough for prices, fewer free-tier tokens
 
 /** Resize and compress an image in the browser before upload. */
 export async function compressImageForUpload(file: File): Promise<File> {

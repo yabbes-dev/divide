@@ -135,7 +135,7 @@ export function StepSummary({
                 <PersonAvatar key={person} name={person} colorIndex={index} />
               ))}
             </div>
-            <label className="block space-y-1.5" htmlFor="saved-group-name">
+            <label className="flex flex-col gap-3" htmlFor="saved-group-name">
               <span className="text-sm font-medium">Group name</span>
               <Input
                 id="saved-group-name"

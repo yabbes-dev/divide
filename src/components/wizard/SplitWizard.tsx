@@ -99,6 +99,7 @@ export function SplitWizard() {
         ) : undefined
       }
       step={step}
+      onHome={wizard.cancel}
       onBack={wizard.canGoBack ? wizard.prevStep : undefined}
     >
       <WizardStepTransition stepKey={step}>

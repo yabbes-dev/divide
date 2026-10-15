@@ -128,7 +128,7 @@ export function StepPeople({
             )}
 
             {showNameField && (
-              <div className="space-y-3.5">
+              <div className="flex flex-col gap-3">
                 <label htmlFor="person-name" className="block text-sm font-medium">
                   Name
                 </label>
