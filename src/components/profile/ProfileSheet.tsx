@@ -41,6 +41,7 @@ export function ProfileSheet() {
   const [members, setMembers] = useState<string[]>([]);
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
   const [hidingAuth, setHidingAuth] = useState(false);
+  const [savingGroup, setSavingGroup] = useState(false);
   const loggingOut = useRef(false);
 
   useEffect(() => {
@@ -107,10 +108,11 @@ export function ProfileSheet() {
 
   async function handleCreateGroup(event: React.FormEvent) {
     event.preventDefault();
-    setBusy(true);
+    if (savingGroup || members.length < 2 || !groupName.trim()) return;
+    setSavingGroup(true);
     setError(null);
     const message = await profileState.createGroup(groupName, members);
-    setBusy(false);
+    setSavingGroup(false);
     if (message) {
       setError(message);
       return;
@@ -335,6 +337,7 @@ export function ProfileSheet() {
     <Dialog
       open={creatingGroup}
       onOpenChange={(next) => {
+        if (!next && savingGroup) return;
         if (!next && creatingGroup) finishGroupForm();
       }}
     >
@@ -342,11 +345,12 @@ export function ProfileSheet() {
         <DialogHeader className="items-center gap-1 px-6 text-center">
           <DialogTitle className="text-xl font-semibold tracking-tight">New group</DialogTitle>
         </DialogHeader>
-        <form className="space-y-4" onSubmit={handleCreateGroup}>
+        <form className="space-y-4" onSubmit={handleCreateGroup} aria-busy={savingGroup}>
           <label className="flex flex-col gap-3">
             <span className="text-sm font-medium">Group name</span>
             <Input
               value={groupName}
+              disabled={savingGroup}
               onChange={(event) => setGroupName(event.target.value)}
               placeholder="e.g. Housemates"
               className="h-11"
@@ -357,6 +361,7 @@ export function ProfileSheet() {
             <div className="flex gap-2">
               <Input
                 value={memberName}
+                disabled={savingGroup}
                 onChange={(event) => setMemberName(event.target.value)}
                 onKeyDown={(event) => {
                   if (event.key === "Enter") {
@@ -370,7 +375,7 @@ export function ProfileSheet() {
               <Button
                 type="button"
                 className={wizardButtonClass}
-                disabled={!memberName.trim()}
+                disabled={savingGroup || !memberName.trim()}
                 onClick={addMember}
               >
                 Add
@@ -395,11 +400,18 @@ export function ProfileSheet() {
           <div className="flex flex-col items-center gap-2">
             <WizardAction
               type="submit"
-              disabled={busy || members.length < 2 || !groupName.trim()}
+              disabled={savingGroup || members.length < 2 || !groupName.trim()}
             >
-              Save group
+              {savingGroup ? (
+                <span className="inline-flex items-center gap-2">
+                  <Loader2 className="size-4 animate-spin" />
+                  Saving…
+                </span>
+              ) : (
+                "Save group"
+              )}
             </WizardAction>
-            <WizardCancelButton onClick={finishGroupForm} />
+            <WizardCancelButton disabled={savingGroup} onClick={finishGroupForm} />
           </div>
         </form>
       </DialogContent>

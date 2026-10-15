@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
 import { useProfile } from "@/components/profile/ProfileProvider";
@@ -58,6 +59,7 @@ export function StepSummary({
 
   async function handleSaveGroup(event: React.FormEvent) {
     event.preventDefault();
+    if (saving || !groupName.trim()) return;
     setSaving(true);
     setSaveError(null);
     const message = await createGroup(groupName, people);
@@ -122,14 +124,20 @@ export function StepSummary({
         </WizardAction>
       </WizardActions>
 
-      <Dialog open={saveOpen} onOpenChange={setSaveOpen}>
+      <Dialog
+        open={saveOpen}
+        onOpenChange={(next) => {
+          if (!next && saving) return;
+          setSaveOpen(next);
+        }}
+      >
         <DialogContent className="max-h-[min(85dvh,40rem)] gap-5 overflow-y-auto rounded-none px-5 py-6 sm:max-w-md">
           <DialogHeader className="items-center gap-1 px-6 text-center">
             <DialogTitle className="text-xl font-semibold tracking-tight">
               Add group to profile
             </DialogTitle>
           </DialogHeader>
-          <form className="space-y-4" onSubmit={handleSaveGroup}>
+          <form className="space-y-4" onSubmit={handleSaveGroup} aria-busy={saving}>
             <div className="flex flex-wrap justify-center gap-3">
               {people.map((person, index) => (
                 <PersonAvatar key={person} name={person} colorIndex={index} />
@@ -140,6 +148,7 @@ export function StepSummary({
               <Input
                 id="saved-group-name"
                 value={groupName}
+                disabled={saving}
                 onChange={(event) => setGroupName(event.target.value)}
                 placeholder="e.g. Housemates"
                 className="h-11"
@@ -147,7 +156,14 @@ export function StepSummary({
             </label>
             {saveError && <InlineNotice variant="error">{saveError}</InlineNotice>}
             <WizardAction type="submit" disabled={saving || !groupName.trim()}>
-              Save group
+              {saving ? (
+                <span className="inline-flex items-center gap-2">
+                  <Loader2 className="size-4 animate-spin" />
+                  Saving…
+                </span>
+              ) : (
+                "Save group"
+              )}
             </WizardAction>
           </form>
         </DialogContent>
