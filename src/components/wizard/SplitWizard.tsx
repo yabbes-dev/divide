@@ -12,6 +12,7 @@ import { StepProcessing } from "@/components/wizard/StepProcessing";
 import { StepSummary } from "@/components/wizard/StepSummary";
 import { StepUpload } from "@/components/wizard/StepUpload";
 import { WizardStepTransition } from "@/components/wizard/WizardStepTransition";
+import { useProfile } from "@/components/profile/ProfileProvider";
 import { useSplitWizard } from "@/hooks/useSplitWizard";
 import { isRateLimitUiError } from "@/lib/api/parse-errors";
 import { moneyClass } from "@/lib/utils/format";
@@ -47,8 +48,13 @@ const STEP_META: Record<WizardStep, { title: string; description: string }> = {
 
 export function SplitWizard() {
   const wizard = useSplitWizard();
+  const { profile, groups } = useProfile();
   const { step } = wizard;
   const meta = STEP_META[step];
+  const description =
+    step === 3 && profile && groups.length > 0
+      ? "Pick a group, or start a new one."
+      : meta.description;
   const summaryGrandTotal = useMemo(
     () =>
       Object.values(wizard.personTotals).reduce(
@@ -80,7 +86,7 @@ export function SplitWizard() {
   return (
     <AppLayout
       title={meta.title}
-      description={meta.description}
+      description={description}
       headerExtra={
         step === 5 ? (
           <p className="text-sm text-muted-foreground">
@@ -135,7 +141,9 @@ export function SplitWizard() {
         {step === 3 && (
           <StepPeople
             people={wizard.receipt.people}
+            savedGroups={profile ? groups : undefined}
             onAddPerson={wizard.addPerson}
+            onSelectGroup={wizard.setPeople}
             onRemovePerson={wizard.removePerson}
             onContinue={wizard.nextStep}
             onCancel={wizard.cancel}
@@ -155,6 +163,7 @@ export function SplitWizard() {
 
         {step === 5 && (
           <StepSummary
+            people={wizard.receipt.people}
             personTotals={wizard.personTotals}
             onCopySummary={handleCopySummary}
             onStartNew={wizard.reset}

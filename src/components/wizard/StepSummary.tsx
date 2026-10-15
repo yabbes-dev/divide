@@ -1,25 +1,85 @@
 "use client";
 
+import { useEffect, useRef, useState } from "react";
+import { toast } from "sonner";
+
+import { useProfile } from "@/components/profile/ProfileProvider";
 import { Separator } from "@/components/ui/separator";
 import { BlurFade } from "@/components/magicui/blur-fade";
 import { NumberTicker } from "@/components/magicui/number-ticker";
 import { PersonAvatar } from "@/components/wizard/PersonAvatarChip";
 import { WizardAction, WizardActions } from "@/components/wizard/WizardAction";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { InlineNotice } from "@/components/ui/inline-notice";
+import { Input } from "@/components/ui/input";
+import { sameMemberSet } from "@/lib/profile/validation";
 import { moneyClass } from "@/lib/utils/format";
 import { cn } from "@/lib/utils";
 
 interface StepSummaryProps {
+  people: string[];
   personTotals: Record<string, number>;
   onCopySummary: () => void;
   onStartNew: () => void;
 }
 
 export function StepSummary({
+  people,
   personTotals,
   onCopySummary,
   onStartNew,
 }: StepSummaryProps) {
+  const { profile, groups, open, setOpen, createGroup } = useProfile();
+  const [saveOpen, setSaveOpen] = useState(false);
+  const [groupName, setGroupName] = useState("");
+  const [saveError, setSaveError] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
+  const wantsSave = useRef(false);
   const entries = Object.entries(personTotals).filter(([, amount]) => amount > 0);
+  const alreadySaved = groups.some((group) => sameMemberSet(group.members, people));
+  const canSave = people.length >= 2 && !alreadySaved;
+
+  useEffect(() => {
+    if (profile && wantsSave.current) {
+      wantsSave.current = false;
+      setOpen(false);
+      setSaveOpen(true);
+    }
+  }, [profile, setOpen]);
+
+  useEffect(() => {
+    if (!open && !profile) wantsSave.current = false;
+  }, [open, profile]);
+
+  async function handleSaveGroup(event: React.FormEvent) {
+    event.preventDefault();
+    setSaving(true);
+    setSaveError(null);
+    const message = await createGroup(groupName, people);
+    setSaving(false);
+    if (message) {
+      setSaveError(message);
+      return;
+    }
+    setSaveOpen(false);
+    setGroupName("");
+    toast.success("Group saved.");
+  }
+
+  function handleSaveClick() {
+    if (!profile) {
+      wantsSave.current = true;
+      setOpen(true);
+      return;
+    }
+    setSaveError(null);
+    setSaveOpen(true);
+  }
 
   return (
     <div className="space-y-4">
@@ -52,10 +112,46 @@ export function StepSummary({
         <BlurFade delay={0.15}>
           <WizardAction onClick={onCopySummary}>Share totals</WizardAction>
         </BlurFade>
+        {canSave && (
+          <WizardAction variant="outline" onClick={handleSaveClick}>
+            Add group to profile
+          </WizardAction>
+        )}
         <WizardAction variant="outline" onClick={onStartNew}>
           Split another receipt
         </WizardAction>
       </WizardActions>
+
+      <Dialog open={saveOpen} onOpenChange={setSaveOpen}>
+        <DialogContent className="max-h-[min(85dvh,40rem)] gap-5 overflow-y-auto rounded-none px-5 py-6 sm:max-w-md">
+          <DialogHeader className="items-center gap-1 px-6 text-center">
+            <DialogTitle className="text-xl font-semibold tracking-tight">
+              Add group to profile
+            </DialogTitle>
+          </DialogHeader>
+          <form className="space-y-4" onSubmit={handleSaveGroup}>
+            <div className="flex flex-wrap justify-center gap-3">
+              {people.map((person, index) => (
+                <PersonAvatar key={person} name={person} colorIndex={index} />
+              ))}
+            </div>
+            <label className="block space-y-1.5" htmlFor="saved-group-name">
+              <span className="text-sm font-medium">Group name</span>
+              <Input
+                id="saved-group-name"
+                value={groupName}
+                onChange={(event) => setGroupName(event.target.value)}
+                placeholder="e.g. Housemates"
+                className="h-11"
+              />
+            </label>
+            {saveError && <InlineNotice variant="error">{saveError}</InlineNotice>}
+            <WizardAction type="submit" disabled={saving || !groupName.trim()}>
+              Save group
+            </WizardAction>
+          </form>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Plus_Jakarta_Sans, Space_Grotesk } from "next/font/google";
+import { ProfileProvider } from "@/components/profile/ProfileProvider";
 import { ThemeProvider } from "@/components/providers/ThemeProvider";
 import { Toaster } from "@/components/ui/sonner";
 import { cn } from "@/lib/utils";
@@ -49,7 +50,9 @@ export default function RootLayout({
         suppressHydrationWarning
       >
         <ThemeProvider>
-          {children}
+          <ProfileProvider>
+            {children}
+          </ProfileProvider>
           <Toaster position="top-center" richColors closeButton />
         </ThemeProvider>
       </body>

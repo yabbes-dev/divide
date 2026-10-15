@@ -8,7 +8,7 @@ import { BorderBeam } from "@/components/magicui/border-beam";
 import { FloatingBackground } from "@/components/layout/FloatingBackground";
 import { TypewriterText } from "@/components/magicui/typewriter-text";
 import { CurrencySelect } from "@/components/landing/CurrencySelect";
-import { ThemeToggle } from "@/components/layout/ThemeToggle";
+import { HeaderActions } from "@/components/profile/HeaderActions";
 import { WizardAction } from "@/components/wizard/WizardAction";
 
 interface LandingPageProps {
@@ -21,8 +21,8 @@ export function LandingPage({ onGetStarted }: LandingPageProps) {
   return (
     <div className="app-shell relative flex min-h-dvh w-full flex-col overflow-hidden pt-[env(safe-area-inset-top)]">
       <FloatingBackground floaters />
-      <div className="absolute right-4 top-[env(safe-area-inset-top)] z-50 pt-2.5">
-        <ThemeToggle />
+      <div className="absolute right-4 top-[env(safe-area-inset-top)] z-50 flex items-center pt-2.5">
+        <HeaderActions />
       </div>
 
       <main className="relative z-10 mx-auto flex w-full max-w-lg flex-1 flex-col items-center justify-center px-6 pb-[max(4rem,env(safe-area-inset-bottom))] text-center">

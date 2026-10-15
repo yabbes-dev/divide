@@ -38,3 +38,6 @@ next-env.d.ts
 
 # vercel
 .vercel
+
+# portfolio preview (not part of the product — for Framer migration reference)
+/src/app/portfolio-preview/

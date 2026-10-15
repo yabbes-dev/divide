@@ -127,6 +127,29 @@ export function useSplitWizard() {
     setReceipt((prev) => ({ ...prev, store }));
   }, []);
 
+  const setPeople = useCallback((names: string[]) => {
+    const nextPeople: string[] = [];
+    for (const raw of names) {
+      const formatted = toTitleCase(raw);
+      if (!formatted) continue;
+      if (nextPeople.some((person) => person.toLowerCase() === formatted.toLowerCase())) {
+        continue;
+      }
+      nextPeople.push(formatted);
+    }
+
+    setReceipt((prev) => ({
+      ...prev,
+      people: nextPeople,
+      items: prev.items.map((item) => ({
+        ...item,
+        assignedTo: item.assignedTo.filter((person) =>
+          nextPeople.some((next) => next.toLowerCase() === person.toLowerCase()),
+        ),
+      })),
+    }));
+  }, []);
+
   const addPerson = useCallback((name: string) => {
     const formatted = toTitleCase(name);
     if (!formatted) return;
@@ -264,6 +287,7 @@ export function useSplitWizard() {
     updateReceiptTotal,
     updateStore,
     addPerson,
+    setPeople,
     removePerson,
     toggleAssignment,
     reset,

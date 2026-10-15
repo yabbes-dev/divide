@@ -4,7 +4,7 @@ import Link from "next/link";
 import { ChevronLeft } from "lucide-react";
 import { DivideLogo } from "@/components/brand/DivideLogo";
 import { FloatingBackground } from "@/components/layout/FloatingBackground";
-import { ThemeToggle } from "@/components/layout/ThemeToggle";
+import { HeaderActions } from "@/components/profile/HeaderActions";
 import { Button } from "@/components/ui/button";
 import { WizardProgress } from "@/components/wizard/WizardProgress";
 import { cn } from "@/lib/utils";
@@ -49,8 +49,8 @@ export function AppLayout({
           <Link href="/" className="text-foreground" aria-label="Divide home">
             <DivideLogo variant="mark" size={28} />
           </Link>
-          <div className="absolute right-2 top-1/2 -translate-y-1/2">
-            <ThemeToggle />
+          <div className="absolute right-2 top-1/2 flex -translate-y-1/2 items-center">
+            <HeaderActions />
           </div>
         </div>
       </header>
